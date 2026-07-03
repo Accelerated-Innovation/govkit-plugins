@@ -1,0 +1,38 @@
+name: Validate plugin
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Cancel superseded runs on the same ref (e.g. rapid pushes to a PR branch).
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least privilege: this job only reads code and runs local validation.
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: claude plugin validate
+    runs-on: ubuntu-latest
+    steps:
+      # Actions and the CLI are pinned to exact versions so this gate stays
+      # deterministic. Bump the SHA/version and its comment together.
+      - name: Check out repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code@2.1.199
+
+      # Structural validation of marketplace.json and plugin manifests.
+      # No API key required — this does not call the model.
+      - name: Validate marketplace and plugins
+        run: claude plugin validate .
