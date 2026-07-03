@@ -10,13 +10,13 @@ In Claude Code (or via Settings → Customize plugins in the Claude web app):
 
 ```
 /plugin marketplace add Accelerated-Innovation/govkit-plugins
-/plugin install govkit@accelerated-innovation
+/plugin install govkit@aipos
 ```
 
 Update to the latest version later with:
 
 ```
-/plugin marketplace update accelerated-innovation
+/plugin marketplace update aipos
 ```
 
 ## What's inside
@@ -56,6 +56,10 @@ govkit-plugins/
 4. Run `claude plugin validate .`, commit, and push. Users pick it up with `/plugin marketplace update`.
 
 Skills in a plugin's `skills/` directory load automatically — you don't need to list them anywhere.
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to add a skill, validate locally, and open a PR. Every pull request runs `claude plugin validate` in CI.
 
 ## License
 
