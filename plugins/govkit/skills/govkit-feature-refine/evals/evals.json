@@ -1,0 +1,117 @@
+{
+  "skill_name": "govkit-feature-refine",
+  "evals": [
+    {
+      "id": 1,
+      "name": "strong-spec-approved-no-genai-penalty",
+      "prompt": "Here's a Draft 0 feature spec from our generator. Can you do a readiness review and give us a Development Token recommendation before we hand it to GovKit? Go straight through to the full analysis, no need to pause.",
+      "files": [
+        "files/feature-invoice-approval-strong.md"
+      ],
+      "expected_output": "A single response that opens with a short prose summary of the feature, then the full Gherkin Collaboration Review using the SKILL.md template (pause skipped because the user asked). Decision should be Approved (or Approved with edits for minor wording only) with no critical blockers. The review must NOT penalize the feature for lacking GenAI evaluation criteria, since it has no AI or decision-support behavior. Score should land around 8 or above.",
+      "assertions": [
+        {
+          "name": "decision-is-approved",
+          "text": "The Decision is 'Approved' or 'Approved with edits', not 'Blocked'."
+        },
+        {
+          "name": "no-genai-eval-penalty",
+          "text": "The review does not list missing GenAI/AI evaluation criteria as a blocker or gap for this non-AI feature."
+        },
+        {
+          "name": "uses-canonical-template",
+          "text": "The response uses the '# Gherkin Collaboration Review' template from SKILL.md, including a plain-language behavior summary and a Development Token decision."
+        },
+        {
+          "name": "no-invented-content",
+          "text": "The review does not invent new business rules, thresholds, or scenarios not grounded in the provided spec."
+        },
+        {
+          "name": "opens-with-prose-summary",
+          "text": "The response opens with a prose summary of the feature (paragraphs, not bullets) before any headings, scores, or findings."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "happy-path-only-blocked",
+      "prompt": "Our PM wants to send this feature straight into AI-assisted coding this sprint. Review it and tell us if it's ready \u2014 skip the summary pause and give us the full review in one go.",
+      "files": [
+        "files/feature-bulk-export-weak.md"
+      ],
+      "expected_output": "Decision must be Blocked. The review should identify as critical blockers: missing permission/authorization coverage (who may export customer data), unresolved PII/privacy question, and missing relevant NFRs (security/privacy at minimum). Scenarios are also scripty/UI-mechanical ('click Export') and use inconsistent framing, which should surface as edits or scoring, but the blockers are the gate. The review should ask questions rather than invent the missing permission rules or field list.",
+      "assertions": [
+        {
+          "name": "decision-is-blocked",
+          "text": "The Decision is 'Blocked'."
+        },
+        {
+          "name": "permission-blocker-identified",
+          "text": "Missing permission/authorization coverage for exporting customer data is identified as a blocker or critical gap."
+        },
+        {
+          "name": "unresolved-privacy-question-identified",
+          "text": "The unresolved PII/privacy open question is identified as a blocker (scenario depends on unresolved questions / missing privacy constraint)."
+        },
+        {
+          "name": "asks-not-invents",
+          "text": "The review asks refinement questions about permissions and PII fields instead of inventing an authorization rule or a field list."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "ai-feature-missing-evals-blocked",
+      "prompt": "QA flagged this one during pre-review. It's an AI summarization feature. Can you check whether the spec is ready for GovKit execution? No need to pause after the summary, run the whole review.",
+      "files": [
+        "files/feature-ai-summary-missing-evals.md"
+      ],
+      "expected_output": "Decision must be Blocked because evaluation criteria are missing for AI behavior (a critical blocker per the rubric). The review should call for accuracy/groundedness/safety evaluation criteria with thresholds, data sources, and evidence artifacts \u2014 but must ask for thresholds or mark them as gaps, never invent numeric thresholds. The Gherkin itself is reasonable (including the failure-path rule), so the review should not manufacture Gherkin problems to justify the block.",
+      "assertions": [
+        {
+          "name": "decision-is-blocked",
+          "text": "The Decision is 'Blocked'."
+        },
+        {
+          "name": "missing-eval-criteria-is-the-blocker",
+          "text": "Missing evaluation criteria for AI behavior is explicitly identified as the critical blocker."
+        },
+        {
+          "name": "no-invented-thresholds",
+          "text": "The review does not invent numeric evaluation thresholds (e.g. 'accuracy must be 95%'); it asks for thresholds or marks them as gaps."
+        },
+        {
+          "name": "genai-dimensions-named",
+          "text": "The evaluation gaps reference GenAI dimensions such as accuracy, groundedness, safety, or human review path."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "summary-checkpoint-pauses",
+      "prompt": "Here's a Draft 0 feature spec our generator produced. Can you review it before refinement?",
+      "files": [
+        "files/feature-invoice-approval-strong.md"
+      ],
+      "expected_output": "Stage 1 only: a short prose summary (one or two paragraphs, no bullets, no headings) covering the actor, business outcome, key rules, boundaries, and evidence expectations \u2014 then a stop that asks the user to confirm the summary and say 'continue' for the full analysis. The response must NOT contain a readiness score, a Development Token decision, a blocker list, or the full review template. The full analysis comes only after the user confirms.",
+      "assertions": [
+        {
+          "name": "summary-is-prose",
+          "text": "The feature summary is written in prose paragraphs, not bullet points or the review template."
+        },
+        {
+          "name": "no-premature-analysis",
+          "text": "The response contains no readiness score, no Approved/Blocked decision, and no critical blocker list."
+        },
+        {
+          "name": "asks-to-continue",
+          "text": "The response ends by asking the user to confirm the summary and/or continue to the full analysis."
+        },
+        {
+          "name": "summary-is-accurate",
+          "text": "The prose summary accurately reflects the invoice approval feature (threshold routing, rejection with reason, role restriction, audit evidence) without inventing details."
+        }
+      ]
+    }
+  ]
+}

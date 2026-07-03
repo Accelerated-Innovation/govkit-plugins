@@ -1,0 +1,21 @@
+{
+  "name": "aipos",
+  "description": "GovKit — governed AI delivery skills from Accelerated Innovation.",
+  "owner": {
+    "name": "Accelerated Innovation",
+    "email": "marty@acceleratedinnovation.com"
+  },
+  "plugins": [
+    {
+      "name": "govkit",
+      "source": "./plugins/govkit",
+      "description": "GovKit skills for governed, AI-assisted delivery: refine Draft 0 feature specs (Gherkin + NFRs + evaluation criteria) before coding begins.",
+      "author": { "name": "Accelerated Innovation" },
+      "homepage": "https://acceleratedinnovation.com",
+      "repository": "https://github.com/Accelerated-Innovation/govkit-plugins",
+      "license": "MIT",
+      "keywords": ["govkit", "gherkin", "bdd", "ai-delivery", "governance", "refinement"],
+      "category": "productivity"
+    }
+  ]
+}
