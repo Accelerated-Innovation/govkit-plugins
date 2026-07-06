@@ -123,7 +123,8 @@ def extract_evaluation_prediction(plan_path: Path):
             data = yaml.safe_load(block)
         except yaml.YAMLError:
             return None
-        if isinstance(data, dict) and "evaluation_prediction" in data:
+        if isinstance(data, dict) and isinstance(
+                data.get("evaluation_prediction"), dict):
             return data["evaluation_prediction"]
     return None
 
@@ -140,6 +141,7 @@ def read_eval_criteria(path: Path):
 
 def completeness(feature_dir: Path, pred, criteria, marker_level) -> dict:
     """Spec completeness rubric — tier1_metrics_catalog pair-4 (0-100)."""
+    pred = pred if isinstance(pred, dict) else None
     comps = []
 
     def add(name, points, ok, reason):
@@ -191,10 +193,16 @@ def snapshot_events(repo: Path, marker: dict):
     if not features_dir.is_dir():
         return
     level = marker.get("level")
+    # Fallback anchor for a feature with no path-specific commit yet (e.g. an
+    # uncommitted working-tree feature): use repo HEAD so commit_sha / ts stay
+    # non-null strings per the event vocabulary. They stay None only when the
+    # repo has no commits at all, which validate() then flags.
+    head_sha = git(repo, "rev-parse", "HEAD")
+    head_ts = git(repo, "show", "-s", "--format=%cI", "HEAD")
     for fdir in sorted(p for p in features_dir.iterdir() if p.is_dir()):
         rel = f"features/{fdir.name}"
-        sha = git(repo, "log", "-1", "--format=%H", "--", rel) or None
-        ts = git(repo, "log", "-1", "--format=%cI", "--", rel) or None
+        sha = git(repo, "log", "-1", "--format=%H", "--", rel) or head_sha or None
+        ts = git(repo, "log", "-1", "--format=%cI", "--", rel) or head_ts or None
         artifacts = ["acceptance.feature", "nfrs.md", "plan.md",
                      "eval_criteria.yaml", "architecture_preflight.md",
                      "agent_topology.md"]
@@ -233,9 +241,31 @@ def snapshot_events(repo: Path, marker: dict):
         })
 
 
+def load_json_list(path: Path, label: str) -> list:
+    """Read a user-supplied JSON array (optional --ci-runs / --prs input).
+
+    Optional inputs must not abort the run with a traceback: on any read or
+    parse problem, or if the top level is not a JSON array, exit 2 with a
+    clear message instead.
+    """
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        print(f"error: cannot read {label} file '{path}': {exc}", file=sys.stderr)
+        sys.exit(2)
+    except json.JSONDecodeError as exc:
+        print(f"error: {label} file '{path}' is not valid JSON: {exc}",
+              file=sys.stderr)
+        sys.exit(2)
+    if not isinstance(data, list):
+        print(f"error: {label} file '{path}' must be a JSON array, not "
+              f"{type(data).__name__}", file=sys.stderr)
+        sys.exit(2)
+    return data
+
+
 # ------------------------------------------------------------- gate runs
-def gate_events(ci_runs_path: Path):
-    runs = json.loads(ci_runs_path.read_text(encoding="utf-8"))
+def gate_events(runs: list):
     for r in runs:
         raw = (r.get("name") or r.get("workflowName") or "").strip()
         base = raw.lower().removesuffix(".yml").removesuffix(".yaml")
@@ -256,8 +286,7 @@ def gate_events(ci_runs_path: Path):
 
 
 # ------------------------------------------------------------------ PRs
-def pr_events(prs_path: Path):
-    prs = json.loads(prs_path.read_text(encoding="utf-8"))
+def pr_events(prs: list):
     for pr in prs:
         commits = pr.get("commits") or []
         texts = []
@@ -375,6 +404,11 @@ def validate(events: list) -> dict:
         if missing_env:
             summary["errors"].append(
                 f"event {i} ({name}): missing envelope {sorted(missing_env)}")
+        if name == "feature.package.snapshot":
+            for key in ("commit_sha", "ts"):
+                if not e.get(key):
+                    summary["errors"].append(
+                        f"event {i} ({name}): missing or empty '{key}'")
     summary["valid"] = not summary["errors"]
     return summary
 
@@ -396,9 +430,9 @@ def main():
     events = list(snapshot_events(args.repo, marker))
     events.extend(rework_events(args.repo, args.rework_days))
     if args.ci_runs:
-        events.extend(gate_events(args.ci_runs))
+        events.extend(gate_events(load_json_list(args.ci_runs, "--ci-runs")))
     if args.prs:
-        events.extend(pr_events(args.prs))
+        events.extend(pr_events(load_json_list(args.prs, "--prs")))
 
     ndjson = "\n".join(json.dumps(e, sort_keys=False) for e in events)
     if args.out:

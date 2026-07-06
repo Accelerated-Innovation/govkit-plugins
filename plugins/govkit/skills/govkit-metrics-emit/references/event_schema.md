@@ -10,7 +10,7 @@ spec completeness) and **Pair 6** (eval coverage at gate).
 | Field | Type | Source |
 |---|---|---|
 | `feature_id` | string | directory name under `features/` |
-| `commit_sha`, `ts` | string | last commit touching `features/<id>/` (git log) |
+| `commit_sha`, `ts` | string | last commit touching `features/<id>/` (git log); falls back to repo HEAD when the feature has no path-specific commit yet. `--validate` fails if neither is available (repo with no commits). |
 | `artifacts_present` | map | file existence: acceptance.feature, nfrs.md, plan.md, eval_criteria.yaml, architecture_preflight.md, agent_topology.md |
 | `artifacts_valid` | map | parse checks (gherkin ≥1 scenario, prediction block parses, criteria YAML parses) |
 | `gherkin_scenario_count` | int | `Scenario:` / `Scenario Outline:` lines, comments excluded |
