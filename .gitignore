@@ -27,6 +27,11 @@ yarn-error.log*
 pnpm-debug.log*
 .npm/
 
+# --- Python (bundled skill scripts, e.g. govkit-metrics-emit) ---
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
 # --- Secrets / environment ---
 .env
 .env.*

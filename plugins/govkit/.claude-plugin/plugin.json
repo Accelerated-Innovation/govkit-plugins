@@ -1,7 +1,7 @@
 {
   "name": "govkit",
   "description": "GovKit skills for governed, AI-assisted delivery: refine Draft 0 feature specs (Gherkin + NFRs + evaluation criteria) before coding begins.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": { "name": "Accelerated Innovation" },
   "homepage": "https://acceleratedinnovation.com",
   "repository": "https://github.com/Accelerated-Innovation/govkit-plugins",
