@@ -1,0 +1,85 @@
+# Event vocabulary — tier1_metrics_catalog v1
+
+All events carry an envelope: `event`, `producer`, `catalog_version`, `schema_version`.
+Timestamps are ISO 8601. Every field is repo-relative (org-agnostic law).
+
+## feature.package.snapshot
+Emitted per feature directory under `features/`. Feeds **Pair 4** (spec lead time ↔
+spec completeness) and **Pair 6** (eval coverage at gate).
+
+| Field | Type | Source |
+|---|---|---|
+| `feature_id` | string | directory name under `features/` |
+| `commit_sha`, `ts` | string | last commit touching `features/<id>/` (git log) |
+| `artifacts_present` | map | file existence: acceptance.feature, nfrs.md, plan.md, eval_criteria.yaml, architecture_preflight.md, agent_topology.md |
+| `artifacts_valid` | map | parse checks (gherkin ≥1 scenario, prediction block parses, criteria YAML parses) |
+| `gherkin_scenario_count` | int | `Scenario:` / `Scenario Outline:` lines, comments excluded |
+| `nfr_heading_count` | int | markdown headings in nfrs.md |
+| `evaluation_prediction` | object\|null | `first_average`, `virtues_average`, `thresholds_met` from the fenced YAML block in plan.md (schema: `governance/schemas/evaluation_prediction.schema.json`) |
+| `eval_criteria_summary` | object\|null | `mode` (llm\|deterministic\|none), `criteria_count`, `tools[]`, `enforce_first`, `enforce_virtues` from eval_criteria.yaml |
+| `completeness` | object | rubric result: `score` (0–100), `max`, `components[]` (name, points, awarded, reason) |
+| `marker_level` | string\|null | `.govkit/marker.json` → `level` |
+
+### Completeness rubric (Pair 4 quality counterweight)
+20 gherkin_scenarios · 10 nfrs · 15 evaluation_prediction_block ·
+15 thresholds_met · 15 score_minima (first.average ≥ 4.0 AND virtues.average ≥ 4.0) ·
+15 eval_criteria (valid; mode llm requires ≥1 criterion) ·
+10 architecture_preflight (required iff marker level = 5; auto-award otherwise).
+Score 100 = gate-ready (starts the "gate-ready" clock for spec lead time).
+
+## pr.merged
+From a PR export (`--prs`). Feeds **Pair 2** (throughput ↔ rework) and **Pair 5**
+(review latency ↔ unreviewed merges).
+Fields: `pr_id`, `feature_id` (parsed from title/branch `features/<id>` pattern),
+`ts_opened`, `ts_ready`, `ts_first_review`, `ts_merged`, `lines_added`,
+`lines_deleted`, `files_changed`, `ai_assisted`, `review_count`, `reviewer_types[]`
+(human/agent; agent = `[bot]` reviewer accounts).
+`ai_assisted` = any commit message matching
+`Co-Authored-By: … (claude|copilot|cursor|windsurf|codex|agent|bot)` — exhaust-only detection.
+
+## gate.run.completed
+From a CI runs export (`--ci-runs`). Feeds **Pair 3** (first-pass eval-gate rate)
+and **Pair 6** (gate throughput). Only workflows in the known gate set are emitted:
+eval-gate, deepeval-gate, promptfoo-gate, ui-eval-gate, quality-gate,
+ui-quality-gate, l3-quality-gate, l3-ui-quality-gate, guardrails-check,
+multi-agent-gate, repo-scope-check, data-common-gate, databricks-gate, dbt-gate
+(matches `ci/github/` and `ci/azure/` in the GovKit repo).
+Fields: `feature_id`, `gate_name`, `run_attempt`, `conclusion`, `ts_start`,
+`ts_end`, `commit_sha`.
+
+## deploy.completed
+Defined for **Pair 1** (deployment frequency ↔ change failure rate) and cycle-time
+termination (Pair 3). Originates in CI/CD deployment events — **not emitted by this
+producer**; a CI-side adapter emits it. Fields: `deploy_id`, `env`, `ts`, `status`
+(success|failure|rollback), `commit_shas[]`.
+
+## rework.observed
+Git-history scan. Feeds **Pair 2** (rework rate, quality counterweight).
+Fields: `commit_sha_origin`, `ts_origin`, `lines_added`, `lines_reworked_21d`,
+`rework_author_same`, `feature_id`, `method`.
+
+**Approximation note:** v1 uses file-overlap — deletions by later commits (within
+the window) in files the origin commit added to, capped at origin additions.
+This is an upper bound; it cannot distinguish which exact lines changed. Always
+disclose `method: file-overlap-approximation` when reporting. Exact line
+provenance (git blame lineage) is specified for the aggregator's v2 scan.
+
+## refinement.token.issued (RESERVED — not emitted in v1)
+Reserved for when `govkit-feature-refine` (govkit-plugins marketplace) writes its
+Development Token decision into the feature package as a structured record. The
+token is defined there as a decision record — Approved / Approved with edits /
+Blocked — authorizing AI-assisted coding to start. Once it exists as exhaust,
+this event unlocks Tier 2 metrics (refinement lead time Draft 0→Token,
+blocked-token rate) without changing any v1 metric IDs.
+Planned fields: `feature_id`, `decision` (approved|approved_with_edits|blocked),
+`draft_version`, `ts`.
+
+## Metric-pair mapping (paired-metric law)
+| Pair | Velocity | Quality | Events consumed |
+|---|---|---|---|
+| 1 | deployment_frequency | change_failure_rate | deploy.completed (+git revert detection, aggregator) |
+| 2 | ai_pr_throughput | rework_rate | pr.merged, rework.observed |
+| 3 | feature_cycle_time | first_pass_eval_gate_rate | feature.package.snapshot, deploy.completed, gate.run.completed |
+| 4 | spec_lead_time | spec_completeness_score | feature.package.snapshot |
+| 5 | review_latency | unreviewed_merge_rate | pr.merged |
+| 6 | gate_throughput | eval_coverage_at_gate | gate.run.completed, feature.package.snapshot |
