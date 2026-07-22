@@ -329,6 +329,7 @@ Ready signals:
 - Pass/fail threshold is stated.
 - Evidence artifact is named.
 - Regression expectations are stated.
+- The agentic behavior question was asked explicitly, and the team's yes/no answer is recorded as `multi_agent: true|false` in `eval_criteria.yaml`.
 
 Evaluation areas:
 
@@ -347,6 +348,7 @@ Evaluation areas:
 
 Questions:
 
+- Agentic behavior: yes or no? (The explicit answer sets `multi_agent: true|false` in `eval_criteria.yaml` — never infer it.)
 - What does good output mean for this feature?
 - What dataset or examples prove it?
 - What threshold decides pass or fail?
