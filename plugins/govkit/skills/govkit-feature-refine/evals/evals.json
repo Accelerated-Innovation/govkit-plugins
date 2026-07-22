@@ -66,7 +66,7 @@
       "files": [
         "files/feature-ai-summary-missing-evals.md"
       ],
-      "expected_output": "Decision must be Blocked because evaluation criteria are missing for AI behavior (a critical blocker per the rubric). The review should call for accuracy/groundedness/safety evaluation criteria with thresholds, data sources, and evidence artifacts \u2014 but must ask for thresholds or mark them as gaps, never invent numeric thresholds. The Gherkin itself is reasonable (including the failure-path rule), so the review should not manufacture Gherkin problems to justify the block.",
+      "expected_output": "Decision must be Blocked because evaluation criteria are missing for AI behavior (a critical blocker per the rubric). The review should call for accuracy/groundedness/safety evaluation criteria with thresholds, data sources, and evidence artifacts \u2014 but must ask for thresholds or mark them as gaps, never invent numeric thresholds. The Gherkin itself is reasonable (including the failure-path rule), so the review should not manufacture Gherkin problems to justify the block. Because the pause was skipped and the spec does not answer it, the review should surface the explicit 'agentic behavior: yes/no' question as a refinement question and must not set multi_agent: true or false in eval_criteria.yaml without the team's answer.",
       "assertions": [
         {
           "name": "decision-is-blocked",
@@ -83,6 +83,10 @@
         {
           "name": "genai-dimensions-named",
           "text": "The evaluation gaps reference GenAI dimensions such as accuracy, groundedness, safety, or human review path."
+        },
+        {
+          "name": "agentic-question-not-inferred",
+          "text": "The review surfaces the explicit 'agentic behavior: yes/no' question for the team and does not emit multi_agent: true or multi_agent: false in eval_criteria.yaml without the team's answer."
         }
       ]
     },
@@ -93,7 +97,7 @@
       "files": [
         "files/feature-invoice-approval-strong.md"
       ],
-      "expected_output": "Stage 1 only: a short prose summary (one or two paragraphs, no bullets, no headings) covering the actor, business outcome, key rules, boundaries, and evidence expectations \u2014 then a stop that asks the user to confirm the summary and say 'continue' for the full analysis. The response must NOT contain a readiness score, a Development Token decision, a blocker list, or the full review template. The full analysis comes only after the user confirms.",
+      "expected_output": "Stage 1 only: a short prose summary (one or two paragraphs, no bullets, no headings) covering the actor, business outcome, key rules, boundaries, and evidence expectations \u2014 then a stop that asks the user to confirm the summary and say 'continue' for the full analysis. The checkpoint must also ask the explicit 'agentic behavior: yes or no?' question, whose answer later sets multi_agent in eval_criteria.yaml. The response must NOT contain a readiness score, a Development Token decision, a blocker list, or the full review template. The full analysis comes only after the user confirms.",
       "assertions": [
         {
           "name": "summary-is-prose",
@@ -110,6 +114,10 @@
         {
           "name": "summary-is-accurate",
           "text": "The prose summary accurately reflects the invoice approval feature (threshold routing, rejection with reason, role restriction, audit evidence) without inventing details."
+        },
+        {
+          "name": "asks-agentic-question",
+          "text": "The checkpoint explicitly asks the agentic behavior yes/no question (whether the feature will use autonomous/agentic AI behavior)."
         }
       ]
     }

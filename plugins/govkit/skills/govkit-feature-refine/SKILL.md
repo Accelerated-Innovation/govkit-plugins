@@ -99,6 +99,7 @@ fields:
   acceptance_criteria: optional
   nfrs: optional
   evaluation_criteria: optional
+  agentic_behavior: optional (yes | no, only if the team has stated it explicitly)
   assumptions: optional
   open_questions: optional
   out_of_scope: optional
@@ -175,9 +176,9 @@ Open with a short prose summary of the feature — one or two paragraphs, no bul
 
 Do not add unsupported details. If key inputs are missing (no acceptance criteria, no description), say so plainly in the summary.
 
-Then STOP. End the message by confirming the summary matches the team's understanding and asking whether to continue to the full analysis, for example: "Does this match your understanding of the feature? Say 'continue' and I'll run the full review." Do not reveal blockers, scores, or the Development Token recommendation at this stage — the summary checkpoint exists so the team corrects misread intent *before* the analysis is anchored on it. If the user corrects the summary, restate the corrected understanding and offer to continue again.
+Then STOP. End the message with two things: confirmation that the summary matches the team's understanding, and one explicit closed question — **"Agentic behavior: yes or no?"** — meaning: will this feature use AI agents that act autonomously (planning, multi-step tool use, orchestration of multiple agents, or agent-to-agent handoffs), as opposed to no AI at all or a single-shot AI call? For example: "Does this match your understanding of the feature? And one explicit check: agentic behavior — yes or no? Say 'continue' and I'll run the full review." The team's answer sets `multi_agent` in the Evaluation Criteria output during Step 8; ask the question even when the answer looks obvious from the spec — the team's explicit answer is the record, not your inference. Do not reveal blockers, scores, or the Development Token recommendation at this stage — the summary checkpoint exists so the team corrects misread intent *before* the analysis is anchored on it. If the user corrects the summary, restate the corrected understanding and offer to continue again.
 
-Skip the pause only when the user explicitly asks for the full review in one pass (for example "go straight to the decision" or "no need to pause"). Even then, still open the response with the prose summary before the analysis.
+Skip the pause only when the user explicitly asks for the full review in one pass (for example "go straight to the decision" or "no need to pause"). Even then, still open the response with the prose summary before the analysis, and if the input does not answer the agentic behavior question, carry it into the full analysis as a refinement question (see Step 8).
 
 ### Stage 2 — Full analysis (on user confirmation)
 
@@ -311,6 +312,18 @@ For GenAI behavior, inspect:
 
 Do not invent thresholds. Ask for them or mark gaps.
 
+#### Agentic behavior question and the `multi_agent` flag
+
+Every review asks the explicit question **"Agentic behavior: yes or no?"** — normally at the Stage 1 checkpoint (Step 2). The team's answer sets the `multi_agent` field in the feature's `eval_criteria.yaml`:
+
+| Team's answer | `eval_criteria.yaml` |
+|---|---|
+| Yes | `multi_agent: true` |
+| No | `multi_agent: false` |
+| Not answered yet | Leave `multi_agent` unset and list the question under Questions for refinement (QA / evaluation) |
+
+Set the flag only from the team's explicit yes/no response — never infer it from the spec, even when the answer seems obvious. When the answer is yes, also confirm the evaluation criteria cover tool or agent routing and the human review path.
+
 ### Step 9: Score the draft (advisory)
 
 Score only after understanding the feature, reviewing scenarios, and identifying blockers. The score is a diagnostic that shows where the draft is weak. It does not by itself authorize coding — blockers do that.
@@ -421,6 +434,7 @@ Approved | Approved with edits | Blocked
 ```
 
 ### Evaluation Criteria
+<!-- Must include `multi_agent: true|false`, set from the team's explicit answer to the agentic behavior question (Step 8) — never inferred. If the question is unanswered, omit this section and keep it in Questions for refinement. -->
 ```yaml
 <copy-ready eval criteria>
 ```
@@ -436,7 +450,7 @@ If the input is incomplete, shorten the output and focus on questions, blockers,
 
 ## Question rules
 
-Ask no more than 5 high-priority questions unless the user requests a full backlog.
+Ask no more than 5 high-priority questions unless the user requests a full backlog. The agentic behavior yes/no question (Step 8) is structural and always asked; it does not count against this budget.
 
 Prioritize questions in this order:
 
@@ -497,6 +511,7 @@ Do not:
 - Invent NFR thresholds
 - Add implementation design into Gherkin
 - Create sample scenarios during real-work pilots
+- Set `multi_agent` in eval_criteria.yaml without the team's explicit yes/no answer
 - Replace PM, QA, or Engineering judgment
 - Start coding tasks
 - Create step definitions
@@ -505,6 +520,7 @@ Do not:
 Always:
 
 - Preserve product intent
+- Ask the agentic behavior question explicitly and record the answer as `multi_agent`
 - Surface uncertainty
 - Separate blockers from improvements
 - Keep refinement questions actionable
