@@ -1,10 +1,24 @@
 {
   "name": "govkit",
-  "description": "GovKit skills for governed, AI-assisted delivery: refine Draft 0 feature specs (Gherkin + NFRs + evaluation criteria) before coding begins.",
-  "version": "0.2.0",
-  "author": { "name": "Accelerated Innovation" },
+  "description": "GovKit skills for governed, AI-assisted delivery: refine Draft 0 feature specs (Gherkin + NFRs + evaluation criteria), validate repo readiness before coding, map a whole epic or spec corpus into a scored feature map, emit delivery metrics, and generate synthetic test data.",
+  "version": "0.3.0",
+  "author": {
+    "name": "Accelerated Innovation"
+  },
   "homepage": "https://acceleratedinnovation.com",
   "repository": "https://github.com/Accelerated-Innovation/govkit-plugins",
   "license": "MIT",
-  "keywords": ["govkit", "gherkin", "bdd", "governance", "ai-delivery", "refinement"]
+  "keywords": [
+    "govkit",
+    "gherkin",
+    "bdd",
+    "governance",
+    "ai-delivery",
+    "refinement",
+    "readiness",
+    "feature-map",
+    "development-token",
+    "metrics",
+    "synthetic-data"
+  ]
 }

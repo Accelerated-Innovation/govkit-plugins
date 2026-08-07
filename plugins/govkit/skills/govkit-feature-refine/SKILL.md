@@ -1,6 +1,6 @@
 ---
 name: govkit-feature-refine
-description: Review generated feature specs (Gherkin, NFRs, evaluation criteria) before GovKit execution. Use for refinement conversations where Product, QA, and Engineering improve a draft together before AI-assisted coding starts. Tool-agnostic; works with any generator (e.g. Aha!) and any tracker (e.g. Azure DevOps, Jira). Trigger whenever the user mentions Gherkin, acceptance criteria, feature refinement, 3 Amigos, Draft 0, Development Token, spec review, PM pre-review, QA evidence review, or asks to review, score, or rewrite a feature spec before coding begins — even if they don't name GovKit explicitly.
+description: Review generated feature specs (Gherkin, NFRs, evaluation criteria) before GovKit execution. Use for refinement conversations where Product, QA, and Engineering improve a draft together before AI-assisted coding starts. Tool-agnostic; works with any generator (e.g. Aha!) and any tracker (e.g. Azure DevOps, Jira). Trigger whenever the user mentions Gherkin, acceptance criteria, feature refinement, 3 Amigos, Draft 0, Development Token, spec review, PM pre-review, QA evidence review, or asks to review, score, or rewrite a feature spec before coding begins — even if they don't name GovKit explicitly. Also provides a non-interactive batch scoring mode that emits one JSON verdict per feature; govkit-feature-map calls it to badge a whole corpus.
 ---
 
 # GovKit Feature Refine — Gherkin Collaboration Skill
@@ -161,8 +161,11 @@ Select one mode from the user request or input:
 | QA evidence review | QA needs to inspect testability and evidence |
 | Gherkin rewrite | Team needs cleaner acceptance criteria |
 | Readiness review | Team needs a Development Token recommendation |
+| Batch corpus scoring | A caller needs many features scored non-interactively as structured data (see "Batch mode" below) |
 
 If no mode is stated, use Refinement facilitation. This skill exists primarily for the 3 Amigos conversation; lead with shared understanding, not a score.
+
+Batch corpus scoring is the only mode that skips the Stage 1 pause. Do not infer it from a human's phrasing — enter it only when a caller explicitly asks for batch, non-interactive, or machine-readable scoring. Someone asking about one feature almost always wants the conversation, not the number.
 
 ### Step 2: Summarize feature behavior in prose, then pause
 
@@ -369,6 +372,63 @@ This skill serves two audiences. Choose the mode from context, or ask.
 
 - **Real-work mode** (default for live refinement): use only real feature content. Never invent scenarios, data, rules, or thresholds. Mark gaps as questions.
 - **Learning mode** (for teams new to Gherkin, training, or dry runs): curated and illustrative examples are encouraged to teach the concepts. Label all invented content clearly as a teaching example so it never leaks into a real spec.
+
+## Batch mode (non-interactive corpus scoring)
+
+Sometimes the caller is not a team in a room but another skill or a script that needs many features scored at once — to badge a feature map, populate a readiness dashboard, or track drift across a release. `govkit-feature-map` is the usual caller.
+
+Batch mode exists so that work does not have to reimplement the rubric. It is the same analysis, emitted as data instead of conversation.
+
+**What changes:**
+
+- Skip Stage 1 entirely. No prose summary, no pause, no confirmation question.
+- Run Steps 3 through 10 internally, in order. The ordering still matters: understand the feature, review the scenarios, and identify blockers *before* scoring. A score produced without the blocker pass is the exact failure this rubric was written to prevent.
+- Emit a single raw JSON object and nothing else — no prose, no markdown fence, no commentary.
+- Score one feature per invocation. Batching many features into one call degrades every one of them; fan out instead.
+
+**What does not change:** the ten dimensions, the 1.0 / 0.5 / 0.0 bands, the critical blocker list, the decision rule, and every guardrail. Never invent business rules or thresholds. Ground each blocker and edit in content that is actually in the feature.
+
+**The agentic behavior question.** Batch mode cannot ask it — there is no one to answer. Never infer `multi_agent` from the spec to fill the gap; that is exactly what the interactive rule forbids. Instead, read it from the feature record if the caller supplied it (`agentic_behavior`, or `multi_agent` in an existing `eval_criteria.yaml`), and otherwise leave it unset and surface it in `edits` as a question the team still owes. A batch verdict never sets that flag on its own authority.
+
+### Output schema
+
+```json
+{
+  "key": "AI-124",
+  "score": 6.5,
+  "decision": "Blocked",
+  "notAssessable": false,
+  "multiAgent": null,
+  "summary": "One sentence, max 200 chars, stating what the score reflects.",
+  "dimensions": [
+    {"n": 1, "name": "Outcome and scope", "score": 1.0, "note": "Max 150 chars, grounded in the feature."}
+  ],
+  "blockers": ["Specific, max 200 chars. Empty array if none."],
+  "edits": ["High-priority edit, max 200 chars. Give 3-6, ranked."]
+}
+```
+
+`dimensions` carries all ten, in rubric order: 1 Outcome and scope, 2 Business language, 3 Rule coverage, 4 Example specificity, 5 Scenario structure, 6 Observable outcomes, 7 Implementation neutrality, 8 Edge cases and permissions, 9 NFR alignment, 10 Evaluation and evidence alignment.
+
+`score` is the sum of the ten dimension scores. Compute it by addition, not by impression — a reported total that does not match its own dimensions is the most common batch-mode defect, and it silently changes the decision band.
+
+`decision` follows the standard rule: any blocker present → `Blocked`; otherwise `>= 8` → `Approved`, `7` to under `8` → `Approved with edits`, under `7` → `Blocked`.
+
+`multiAgent` is `true`, `false`, or `null` — `null` meaning the team has not answered yet, never meaning "probably no".
+
+### The notAssessable flag
+
+Set `notAssessable: true` when the record you were given is too thin to review — not because the spec is bad, but because the spec is somewhere you cannot see. A team that deliberately keeps its Gherkin in the repository under version control, and links to it rather than pasting a copy that will drift, has made a defensible governance choice.
+
+Score what is actually in front of you (which will be near zero), set the flag, and say plainly in the summary that the score rates *reviewability of this record*, not the quality of the spec. At least one edit should address how a spec that lives elsewhere can be made reviewable by Product and QA without duplicating it — CI-generated living documentation and a commit-pinned link are the usual answers.
+
+Without this flag a badge libels the most disciplined team in the portfolio, which is worse than not badging at all.
+
+### Standing caveat
+
+Batch scores are a starting point for refinement, not a substitute for it. A caller that renders these into a dashboard or a badge should carry that caveat into the artifact where a reader will see it, and should say that the blocker list is the gate rather than the number. A feature can score 7.5 and still be Blocked; if the artifact does not make that legible, the number will be read as a verdict it was never meant to be.
+
+Batch mode also scores the *collaboration* rubric, which assumes a Draft 0 that has not yet reached the repo. Once a feature package is in the repo as `acceptance.feature` / `nfrs.md` / `eval_criteria.yaml`, `govkit-feature-readiness` and its stricter 12-dimension rubric are the right gate. Do not present a batch score from this skill as repo readiness.
 
 ## Output format
 
