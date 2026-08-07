@@ -36,7 +36,7 @@ Throughout this skill, "generator" and "tracker" are the rules. Aha! and Azure D
 
 - **Draft 0** — the generator's raw output, before human review.
 - **Draft 1** — the version Product, QA, and Engineering approve together during refinement.
-- **Development Token** — GovKit's name for the explicit go/no-go decision that authorizes AI-assisted coding to start. A token is *Approved*, *Approved with edits*, or *Blocked*. No token, no coding. It is a decision record, not a file format.
+- **Development Token** — GovKit's name for the explicit go/no-go decision that authorizes AI-assisted coding to start. A token is *Approved*, *Approved with edits*, or *Blocked*. No token, no coding. It is a decision record, not a file format. The token itself is issued by `govkit-feature-readiness` against the feature package in the repo; this skill produces a *recommendation* toward it.
 
 ## Operating principle
 
@@ -358,13 +358,17 @@ Total possible score: 10.
 
 The blocker checklist is the gate. The score is advisory context.
 
-| Decision | Meaning |
+This step produces a **recommendation**, not the Development Token itself. The token that authorizes AI-assisted coding is issued by `govkit-feature-readiness` once the feature package is in the repo, because only that gate can judge repo fit, the evidence execution path, and whether a coding agent has enough context to work safely. Refinement can confirm a team understands the feature; it cannot confirm the repo is ready for it.
+
+| Recommendation | Meaning |
 |---|---|
-| Approved | No critical blockers, and the draft is strong (score ≈ 8 or above). Ready for GovKit execution and AI-assisted coding. |
+| Approved | No critical blockers, and the draft is strong (score ≈ 8 or above). Draft 1 is ready to go to the repo and face the readiness gate. |
 | Approved with edits | No critical blockers, but targeted edits remain (score roughly 7 to 8). |
 | Blocked | Any critical blocker is present, or the draft is too weak to act on (score below 7). |
 
 If the score lands between bands, defer to the blocker list and the team's judgment, and say so explicitly rather than forcing a number.
+
+Never present this recommendation as authorization to start coding. A team that reads "Approved" here and opens an editor has skipped the gate the two-stage design exists to enforce.
 
 ## Learning mode vs real-work mode
 
@@ -442,7 +446,8 @@ Batch mode also scores the *collaboration* rubric, which assumes a Draft 0 that 
 ## Readiness score (advisory)
 <score>/10
 
-## Decision
+## Token recommendation
+<!-- A recommendation toward the Development Token, not the token itself — govkit-feature-readiness issues that against the repo package. -->
 Approved | Approved with edits | Blocked
 
 ## Plain-language behavior summary

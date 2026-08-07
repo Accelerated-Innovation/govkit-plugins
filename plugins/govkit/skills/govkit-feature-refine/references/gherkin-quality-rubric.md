@@ -67,11 +67,11 @@ Total possible score: 10.
 
 The critical blocker list is the gate. The numeric score is advisory: it shows where the draft is weak but does not by itself authorize coding. If any critical blocker is present, the decision is Blocked regardless of score.
 
-| Total score    | Decision (when no blocker is present)  |
-| -------------- | -------------------------------------- |
-| ≈ 8 or above   | Ready for GovKit execution             |
-| roughly 7 to 8 | Needs targeted edits before execution  |
-| below 7        | Block AI-assisted coding               |
+| Total score    | Recommendation (when no blocker is present)      |
+| -------------- | ------------------------------------------------ |
+| ≈ 8 or above   | Ready to leave refinement for the readiness gate  |
+| roughly 7 to 8 | Needs targeted edits before leaving refinement    |
+| below 7        | Not ready to leave refinement                     |
 
 If the score lands between bands, defer to the blocker list and the team's judgment, and say so explicitly rather than forcing a number. SKILL.md is the canonical source for the decision rules; this rubric elaborates on how to score each dimension.
 
@@ -360,15 +360,17 @@ A completed review should produce:
 * GovKit readiness score
 * Development Token decision
 
-## Development Token decision
+## Development Token recommendation
 
-Use this decision language:
+This rubric produces a recommendation. The Development Token that authorizes AI-assisted coding is issued by `govkit-feature-readiness` against the feature package in the repo, using its stricter 12-dimension rubric. Refinement judges whether the team understands the feature; readiness judges whether the repo can execute it.
 
-| Decision            | Meaning                                                  |
-| ------------------- | -------------------------------------------------------- |
-| Approved            | Ready for GovKit execution and AI-assisted coding.       |
-| Approved with edits | Minor changes required before execution.                 |
-| Blocked             | Do not start AI-assisted coding. Resolve blockers first. |
+Use this language:
+
+| Recommendation      | Meaning                                                         |
+| ------------------- | --------------------------------------------------------------- |
+| Approved            | Draft 1 is ready to go to the repo and face the readiness gate.  |
+| Approved with edits | Minor changes required before the package leaves refinement.     |
+| Blocked             | Do not proceed to the repo. Resolve blockers first.              |
 
 ## Skill response format
 
