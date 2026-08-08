@@ -70,8 +70,9 @@ Do not use it for:
 - Inspecting full repository architecture
 - Final repo readiness enforcement
 - Replacing Product, QA, or Engineering review
+- Sizing scenarios or slicing a feature into MVP/V1/V2 releases
 
-For repo validation, use the GovKit spec-readiness skill.
+For repo validation, use the GovKit spec-readiness skill. For scenario sizing, MoSCoW release slicing, and `@mvp`/`@v1`/`@v2` tagging, use `govkit-feature-slice` — refinement judges whether a spec is understood; slicing judges how big it is and when to ship it.
 
 ## Inputs
 
