@@ -5,6 +5,8 @@ Render a scored feature corpus into a single self-contained HTML feature map.
 Inputs (see references/ingestion-contract.md for the full schema):
     features.json   required   the normalized corpus
     scores.json     optional   govkit-feature-refine batch verdicts, keyed by feature key
+    sizing.json     optional   govkit-feature-slice verdicts AFTER compute_size.py --
+                               only the computed file carries points/bands/rollups
     config.json     optional   title, lanes, boundary sets, explicit node positions
 
 The map has three registers, and they answer different questions:
@@ -13,7 +15,8 @@ The map has three registers, and they answer different questions:
     the ledger  -- every producer/consumer edge, in full
 
 Usage:
-    python render_map.py -f features.json -s scores.json -c config.json -o map.html
+    python render_map.py -f features.json -s scores.json -z sizing_computed.json \
+                         -c config.json -o map.html
 """
 
 import argparse
@@ -231,6 +234,81 @@ def wrap_label(t, width=24, maxlines=2):
     return lines or [str(t)]
 
 
+# ------------------------------------------------------------------ sizing
+
+SLICE_TAGS = ("mvp", "v1", "v2")
+SIZE_TAGS = ("small", "medium", "large")
+
+
+def scen_slice(sc):
+    """The scenario's tagged release slice, or "". Tags are decisions the team made;
+    only these drive grouping and filtering -- a batch recommendation never does."""
+    for t in sc.get("tags") or []:
+        n = t.lstrip("@").lower()
+        if n in SLICE_TAGS:
+            return n
+    return ""
+
+
+def size_badge(f, sizing):
+    roll = (sizing.get(f["key"]) or {}).get("rollup") or {}
+    if roll:
+        c = roll["counts"]
+        lg = ' class="lg"' if c["large"] else ""
+        return (f'<span class="szb"><b{lg}>{c["large"]}</b>L &#183; <b>{c["medium"]}</b>M '
+                f'&#183; <b>{c["small"]}</b>S &#183; <b>{roll["totalPoints"]}</b> pts</span>')
+    # No sizing run, but the team may have committed size tags -- band counts alone
+    # still render honestly; the points total genuinely needs a sizing pass.
+    counts = dict.fromkeys(SIZE_TAGS, 0)
+    for r in f.get("rules") or []:
+        for sc in r.get("scenarios") or []:
+            for t in sc.get("tags") or []:
+                n = t.lstrip("@").lower()
+                if n in counts:
+                    counts[n] += 1
+    if not any(counts.values()):
+        return ""
+    lg = ' class="lg"' if counts["large"] else ""
+    return (f'<span class="szb"><b{lg}>{counts["large"]}</b>L &#183; '
+            f'<b>{counts["medium"]}</b>M &#183; <b>{counts["small"]}</b>S</span>')
+
+
+def sizing_panel(f, sizing):
+    sz = sizing.get(f["key"]) or {}
+    roll = sz.get("rollup")
+    if not roll:
+        return ""
+
+    risks = "".join(f"<li>{e(r)}</li>" for r in roll.get("riskFlags") or [])
+    riskb = (f'<div class="gh">Risk <span class="gn">{len(roll["riskFlags"])}</span>'
+             f'<em>Large scenarios on the MVP critical path &#8212; split or accept explicitly'
+             f'</em></div><ol class="blk">{risks}</ol>') if risks else ""
+
+    rows = ""
+    for s in sz.get("scenarios") or []:
+        d = s.get("dimensions") or {}
+        sl = s.get("effectiveSlice") or ""
+        rec = ' <em class="rec">rec</em>' if sl and s.get("sliceSource") != "tagged" else ""
+        rows += (f'<tr><td>{e(s.get("name", ""))}</td>'
+                 f'<td class="dsz">{d.get("dataState", "?")}&#183;{d.get("integration", "?")}'
+                 f'&#183;{d.get("uiSteps", "?")}</td>'
+                 f'<td class="dsz"><b>{s.get("points", "")}</b></td>'
+                 f'<td class="bnd b-{e(s.get("band", ""))}">'
+                 f'{e((s.get("band") or "").capitalize())}</td>'
+                 f'<td class="slc">{f"@{e(sl)}{rec}" if sl else "&#8212;"}</td></tr>')
+
+    c = roll["counts"]
+    ct = f'{c["large"]}L / {c["medium"]}M / {c["small"]}S &#183; {roll["totalPoints"]} pts'
+    return (f'<details class="sub siz"><summary>Scenario sizing'
+            f'<span class="ct">{ct}</span></summary>{riskb}'
+            f'<div class="gh">Complexity <em>Data &amp; State &#183; Integration &#183; UI/UX, '
+            f'each 1&#8211;3 &#183; Small 3&#8211;4 &#183; Medium 5&#8211;7 &#183; '
+            f'Large 8&#8211;9 &#183; slices marked <b>rec</b> are unconfirmed recommendations'
+            f'</em></div>'
+            f'<table class="nfr szt"><tr><th>Scenario</th><th>D&#183;I&#183;U</th><th>Pts</th>'
+            f'<th>Size</th><th>Slice</th></tr>{rows}</table></details>')
+
+
 # ------------------------------------------------------------------ cards
 
 def readiness(f, scores):
@@ -271,7 +349,7 @@ def readiness(f, scores):
     return tok, panel
 
 
-def card(f, scores, central):
+def card(f, scores, sizing, central):
     st = f.get("status") or ""
     cls = "ok" if st == "In Delivery" else ("rdy" if st.startswith("Ready") else "wip")
     chips = "".join(f'<span class="chip in" data-art="{e(a)}">&#8592; {e(a)}</span>'
@@ -281,11 +359,17 @@ def card(f, scores, central):
 
     rules = ""
     for r in f.get("rules") or []:
-        scs = "".join(
-            "<li><b>{}</b><ol class='steps'>{}</ol></li>".format(
-                e(sc.get("name", "")),
-                "".join(f"<li>{e(x)}</li>" for x in sc.get("steps") or []))
-            for sc in r.get("scenarios") or [])
+        scs = ""
+        for sc in r.get("scenarios") or []:
+            sl = scen_slice(sc)
+            tags = "".join(
+                f'<span class="stag st-{t.lstrip("@").lower()}">{e(t)}</span>'
+                for t in sc.get("tags") or []
+                if t.lstrip("@").lower() in SLICE_TAGS + SIZE_TAGS)
+            steps = "".join(f"<li>{e(x)}</li>" for x in sc.get("steps") or [])
+            slattr = f' data-slice="{sl}"' if sl else ""
+            scs += (f'<li{slattr}><b>{e(sc.get("name", ""))}</b>'
+                    f'{tags}<ol class="steps">{steps}</ol></li>')
         label = e(r.get("rule") or "(no Rule declared)")
         rules += (f'<details class="rule"><summary><span class="rr">RULE</span>{label}'
                   f'<span class="ct">{len(r.get("scenarios") or [])}</span></summary>'
@@ -340,6 +424,8 @@ def card(f, scores, central):
     ph = " ".join(f'<span class="pp">P{e(p)}</span>' for p in f.get("phases") or [])
     env = "central" if f["key"] in central else "deployment"
     tok, panel = readiness(f, scores)
+    sizb = sizing_panel(f, sizing)
+    szb = size_badge(f, sizing)
     url = f.get("url")
     keyhtml = (f'<a class="key" href="{e(url)}" target="_blank" rel="noopener">{e(f["key"])}</a>'
                if url else f'<span class="key nolink">{e(f["key"])}</span>')
@@ -355,8 +441,8 @@ def card(f, scores, central):
 <div class="metrics"><span><b>{f.get('ruleCount',0)}</b> rules</span>
 <span><b>{f.get('scenarioCount',0)}</b> scenarios</span>
 <span><b>{len(f.get('openQuestions') or [])}</b> open</span>
-<span class="{'amber' if ntbd else ''}"><b>{ntbd}</b> NFR gaps</span></div></header>
-<div class="body">{panel}{scopeb}<details class="sub ac" open>
+<span class="{'amber' if ntbd else ''}"><b>{ntbd}</b> NFR gaps</span>{szb}</div></header>
+<div class="body">{panel}{sizb}{scopeb}<details class="sub ac" open>
 <summary>Acceptance criteria<span class="ct">{f.get('ruleCount',0)}</span></summary>
 {rules}</details>{nfrb}{evb}{oqb}{oosb}{dodb}</div></article>'''
 
@@ -524,6 +610,33 @@ table.led td.an{font-family:ui-monospace,monospace;color:var(--cen)}
 tr.term td.an{color:var(--mut)}
 a.mini{font-family:ui-monospace,monospace;font-size:11px;color:var(--ink2);text-decoration:none;
 border-bottom:1px solid var(--hair);margin-right:5px}
+.stag{font-size:9px;letter-spacing:.05em;padding:1px 5px;border-radius:3px;margin-left:6px;
+font-family:ui-monospace,monospace;vertical-align:1px;white-space:nowrap}
+.stag.st-mvp{background:#E7EEF4;color:var(--cen);font-weight:700}
+.stag.st-v1{background:var(--hair2);color:var(--ink2)}
+.stag.st-v2{background:#F1F3F6;color:var(--mut)}
+.stag.st-small{border:1px solid var(--hair);color:var(--dep)}
+.stag.st-medium{border:1px solid var(--hair);color:var(--ink2)}
+.stag.st-large{border:1px solid var(--amb);color:var(--amb);font-weight:700}
+.metrics .szb{white-space:nowrap}
+.metrics .szb b.lg{color:var(--amb)}
+table.szt td{font-size:11.5px}
+table.szt td.dsz{font-family:ui-monospace,monospace;white-space:nowrap}
+table.szt td.bnd{font-weight:600}
+table.szt td.b-large{color:var(--amb)} table.szt td.b-small{color:var(--dep)}
+table.szt td.slc{font-family:ui-monospace,monospace;white-space:nowrap}
+table.szt em.rec{font-style:normal;font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+color:var(--amb);border:1px solid var(--hair);padding:0 3px;border-radius:2px}
+.fltbar{display:flex;align-items:center;gap:8px;margin:18px 0 0;flex-wrap:wrap}
+.fltbar>span{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--mut);
+font-family:ui-monospace,monospace}
+.fltbar button{font:600 11px ui-monospace,monospace;padding:3px 10px;border-radius:4px;
+border:1px solid var(--hair);background:var(--wht);color:var(--ink2);cursor:pointer}
+.fltbar button.on{border-color:var(--cen);color:var(--cen);background:#E7EEF4}
+.fltbar em{font-size:11px;color:var(--mut);font-style:normal}
+body.flt-mvp ul.scen>li:not([data-slice="mvp"]),
+body.flt-v1 ul.scen>li:not([data-slice="v1"]),
+body.flt-v2 ul.scen>li:not([data-slice="v2"]){opacity:.28}
 @media(max-width:640px){
 .wrap{padding:0 15px 60px} h1{font-size:27px} .grid{grid-template-columns:1fr}
 .stat{min-width:50%;border-right:0;border-bottom:1px solid var(--hair2)}
@@ -539,10 +652,15 @@ document.querySelectorAll('.chip[data-art]').forEach(function(c){
   c.addEventListener('mouseenter',function(){set(true)});
   c.addEventListener('mouseleave',function(){set(false)});
 });
+var fb=document.querySelectorAll('.fltbar button');
+fb.forEach(function(b){b.addEventListener('click',function(){
+  fb.forEach(function(x){x.classList.remove('on')});b.classList.add('on');
+  var f=b.getAttribute('data-flt');document.body.className=f?'flt-'+f:'';
+})});
 """
 
 
-def render(feats, scores, cfg):
+def render(feats, scores, sizing, cfg):
     central = set(cfg.get("central") or [])
     lanes_cfg = cfg.get("lanes") or []
     if not lanes_cfg:
@@ -555,7 +673,7 @@ def render(feats, scores, cfg):
 
     lanes = ""
     for L in lanes_cfg:
-        cs = "".join(card(f, scores, central) for f in feats
+        cs = "".join(card(f, scores, sizing, central) for f in feats
                      if (f.get("workstream") or "Features") == L["name"])
         if not cs:
             continue
@@ -613,6 +731,41 @@ def render(feats, scores, cfg):
     else:
         govnote = tkleg = ""
 
+    sizenote, szstats = "", ""
+    if sizing:
+        rolls = [sz.get("rollup") or {} for sz in sizing.values()]
+        tp = sum(r.get("totalPoints", 0) for r in rolls)
+        nl = sum(r.get("counts", {}).get("large", 0) for r in rolls)
+        nrisk = sum(len(r.get("riskFlags") or []) for r in rolls)
+        mvp_pts = sum(r.get("slicePoints", {}).get("mvp", 0) for r in rolls)
+        szstats = f'<div class="stat"><b>{tp}</b><span>Size points</span></div>'
+        if mvp_pts:
+            szstats += f'<div class="stat"><b>{mvp_pts}</b><span>MVP points</span></div>'
+        sizenote = (
+            '<p class="govnote"><b>Size badges.</b> Sized cards carry a scenario-size '
+            'distribution &#8212; <b>nL / nM / nS &#183; total points</b> &#8212; from the '
+            'Scenario Complexity Matrix (Data &amp; State, Integration, UI/UX at 1&#8211;3 '
+            'points each; Small 3&#8211;4, Medium 5&#8211;7, Large 8&#8211;9). Counts rather '
+            'than an average, because the Large count is the risk signal an average hides. '
+            "Open a card's <em>Scenario sizing</em> panel for the per-scenario breakdown. "
+            'Slices marked <em>rec</em> are batch recommendations nobody has confirmed '
+            '&#8212; the release plan is the team&#39;s decision, not the map&#39;s. '
+            f'Judgments by govkit-feature-slice; all arithmetic by compute_size.py. '
+            f'{nl} Large scenario(s) stand across the corpus, {nrisk} of them on an MVP '
+            'critical path.</p>')
+
+    has_slice_tags = any(scen_slice(sc) for f in feats for r in f.get("rules") or []
+                         for sc in r.get("scenarios") or [])
+    fltbar = ""
+    if has_slice_tags:
+        fltbar = ('<div class="fltbar"><span>Release slice</span>'
+                  '<button class="on">All</button>'
+                  '<button data-flt="mvp">@mvp</button>'
+                  '<button data-flt="v1">@v1</button>'
+                  '<button data-flt="v2">@v2</button>'
+                  '<em>dims scenarios outside the slice &#8212; tagged slices only, '
+                  'untagged scenarios dim under any filter</em></div>')
+
     title = cfg.get("title", "Feature Map")
     return f"""<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -629,7 +782,7 @@ def render(feats, scores, cfg):
 <div class="stat"><b>{len(arts)}</b><span>Artifacts</span></div>
 <div class="stat a"><b>{TQ}</b><span>Open questions</span></div>
 <div class="stat a"><b>{TN}</b><span>NFR gaps</span></div>
-{gov}</div>{govnote}</header>
+{szstats}{gov}</div>{govnote}{sizenote}</header>
 <h2>The chain</h2>
 <p class="h2s">Every producer-to-consumer link in the corpus. Each arrow is a named artifact one
 feature emits and the next reads.</p>
@@ -637,6 +790,7 @@ feature emits and the next reads.</p>
 <div class="legend"><span><i></i>{e(cfg.get('centralLabel','Runs centrally'))}</span>
 <span><i></i>{e(cfg.get('deploymentLabel','Runs in the deployment'))}</span></div>
 {tkleg}
+{fltbar}
 {lanes}
 <h2>Artifact ledger</h2>
 <p class="h2s">Every named artifact, who produces it and who consumes it.</p>
@@ -648,6 +802,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("-f", "--features", required=True)
     ap.add_argument("-s", "--scores")
+    ap.add_argument("-z", "--sizing",
+                    help="computed sizing (compute_size.py output), keyed by feature key")
     ap.add_argument("-c", "--config")
     ap.add_argument("-o", "--out", default="feature-map.html")
     a = ap.parse_args()
@@ -658,15 +814,26 @@ def main():
         raw = json.load(open(a.scores))
         scores = {k: v for k, v in (raw.get("features", raw)).items()
                   if not k.startswith("_")}
+    sizing = {}
+    if a.sizing and os.path.isfile(a.sizing):
+        raw = json.load(open(a.sizing))
+        sizing = {k: v for k, v in (raw.get("features", raw)).items()
+                  if not k.startswith("_")}
+        raw_only = [k for k, v in sizing.items() if not v.get("rollup")]
+        if raw_only:
+            print(f"warning: {len(raw_only)} sizing entr(ies) have no rollup -- run "
+                  f"compute_size.py first; skipping: {', '.join(raw_only)}")
+            sizing = {k: v for k, v in sizing.items() if v.get("rollup")}
     cfg = json.load(open(a.config)) if a.config and os.path.isfile(a.config) else {}
 
     missing = [f["key"] for f in feats if f["key"] not in scores]
     if scores and missing:
         print(f"warning: {len(missing)} feature(s) unscored: {', '.join(missing)}")
 
-    doc = render(feats, scores, cfg)
+    doc = render(feats, scores, sizing, cfg)
     open(a.out, "w", encoding="utf-8").write(doc)
-    print(f"{len(feats)} features, {len(scores)} scored -> {a.out} ({len(doc)} bytes)")
+    print(f"{len(feats)} features, {len(scores)} scored, {len(sizing)} sized -> "
+          f"{a.out} ({len(doc)} bytes)")
     return 0
 
 

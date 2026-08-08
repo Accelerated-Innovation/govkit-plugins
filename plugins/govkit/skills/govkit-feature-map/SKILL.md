@@ -1,6 +1,6 @@
 ---
 name: govkit-feature-map
-description: Build a visual, scored feature map of a whole epic, release or spec corpus — a chain diagram of how artifacts flow between features, one card per feature with its Gherkin, NFRs and evaluation criteria, and a GovKit Development Token badge on every feature showing whether it is ready for AI-assisted coding. Ingests from Jira, Aha!, or a repo directory of feature specs, and merges a tracker record with repo-resident Gherkin. Trigger whenever the user asks to map, visualise, chart, or diagram an epic or set of features, wants a readiness dashboard or portfolio view, asks to score or badge many features at once, wants to see how features connect or what produces and consumes what, or asks where a release is weakest or what is blocking delivery — even if they don't say "feature map" or name GovKit.
+description: Build a visual, scored feature map of a whole epic, release or spec corpus — a chain diagram of how artifacts flow between features, one card per feature with its Gherkin, NFRs and evaluation criteria, a GovKit Development Token badge on every feature showing whether it is ready for AI-assisted coding, and optionally a size badge per feature (scenario complexity distribution) with MVP/V1/V2 slice views from Gherkin tags. Ingests from Jira, Aha!, or a repo directory of feature specs, and merges a tracker record with repo-resident Gherkin. Trigger whenever the user asks to map, visualise, chart, or diagram an epic or set of features, wants a readiness dashboard or portfolio view, asks to score, size, or badge many features at once, wants to see how features connect or what produces and consumes what, asks where a release is weakest or what is blocking delivery, or wants to see how big features are or what the MVP slice costs across a corpus — even if they don't say "feature map" or name GovKit.
 ---
 
 # GovKit Feature Map
@@ -74,21 +74,34 @@ The rest of this section covers refine batch mode, the common case for a tracker
 - **Tell agents explicitly to skip the Stage 1 pause.** `govkit-feature-refine` is built for a conversation about one feature and will otherwise stop and ask for confirmation.
 - Collect the verdicts into `scores.json` keyed by feature key.
 
+**Sizing is a separate, optional pass** delegated to `govkit-feature-slice`, which owns the Scenario Complexity Matrix and the MoSCoW slice definitions. Offer it when the user wants size badges, Large-scenario risk, or MVP/V1/V2 slice views. If the corpus already carries slice and size tags on scenarios, render from the tags and skip the fan-out; otherwise fan out per feature exactly like quality scoring, collect judgments into `sizing.json`, and let `compute_size.py` do every piece of arithmetic. `references/scoring.md` has the sizing prompt and the tagged-versus-recommended rule. Size and quality verdicts never mix — a feature can be Approved and huge, or Blocked and tiny, and both facts belong on the card separately.
+
 ### 5. Verify — this is a gate, not a lint
 
 ```bash
 python scripts/verify_scores.py scores.json --features features.json
 ```
 
-Run this before rendering, every time. Batch scoring is done by language models reading a rubric, and the characteristic failure is a reported total that does not match its own dimensions — which silently moves a feature across a decision band. A score of 8.5 reported for dimensions summing to 8.0 is the difference between "Approved" and a conversation.
+If a sizing pass ran, its gate is the compute step itself:
+
+```bash
+python ../govkit-feature-slice/scripts/compute_size.py sizing.json --features features.json
+```
+
+It validates every dimension judgment and exits non-zero without writing anything on failure; only its computed output goes to the renderer, never the raw agent verdicts.
+
+Run these before rendering, every time. Batch scoring is done by language models reading a rubric, and the characteristic failure is a reported total that does not match its own dimensions — which silently moves a feature across a decision band. A score of 8.5 reported for dimensions summing to 8.0 is the difference between "Approved" and a conversation.
 
 The script checks: every dimension is 1.0/0.5/0.0, all ten present and in rubric order, the stated score equals the sum, the decision follows from blockers plus bands, and every ingested feature was scored. It exits non-zero on any failure. If it fails, fix the verdicts — re-run the agent for that feature — rather than rendering anyway. `--fix-sums` will recompute totals and decisions mechanically, but prefer re-scoring when the error suggests the agent was confused rather than sloppy.
 
 ### 6. Render
 
 ```bash
-python scripts/render_map.py -f features.json -s scores.json -c config.json -o feature-map.html
+python scripts/render_map.py -f features.json -s scores.json -z sizing_computed.json \
+                             -c config.json -o feature-map.html
 ```
+
+`-z` is optional and takes the *computed* sizing file. Size renders as a distribution — `2L / 5M / 3S · 41 pts` — because the Large count is the risk signal an average hides. Slice tags render as chips on scenarios, and the release-slice filter works from tagged slices only; batch recommendations appear marked `rec` and never drive grouping.
 
 `references/rendering.md` documents `config.json` — title, lanes, boundary sets, and explicit node positions.
 
@@ -135,6 +148,7 @@ This skill is for the **corpus**. The other GovKit skills act on one feature at 
 |---|---|---|
 | `govkit-feature-refine` | The 10-dimension collaboration rubric and the 3 Amigos conversation | Working on *one* feature — improving its Gherkin, running refinement, discussing a Development Token |
 | `govkit-feature-readiness` | The 12-dimension repo-side gate | Validating *one* approved feature package before coding starts |
+| `govkit-feature-slice` | The Scenario Complexity Matrix, MoSCoW slicing, and the `@mvp`/`@v1`/`@v2` tag vocabulary | Sizing and slicing *one* feature with a PM — the conversation where slice tags actually get decided |
 
 The map reads their rubrics; it never restates them. If a rubric changes, the badges change with it — which is the point.
 

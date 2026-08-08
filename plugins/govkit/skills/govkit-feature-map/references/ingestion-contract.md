@@ -40,7 +40,8 @@ Every adapter normalizes into the same `features.json`: a JSON array of feature 
       "scenarios": [
         {
           "name": "The session opens on a prepared capsule",
-          "steps": ["Given a context pack exists", "When the session begins", "Then …"]
+          "steps": ["Given a context pack exists", "When the session begins", "Then …"],
+          "tags": ["@mvp", "@small"] // Gherkin tags, verbatim; [] when untagged
         }
       ]
     }
@@ -69,6 +70,8 @@ Every adapter normalizes into the same `features.json`: a JSON array of feature 
 ```
 
 Every field except `key` and `title` is optional. Missing fields degrade the card gracefully; they do **not** get invented. An empty `nfr` array means this feature declares no NFRs, and the rubric will score that honestly.
+
+**Scenario tags** carry release-slicing and sizing decisions made by `govkit-feature-slice`: `@mvp` / `@v1` / `@v2` for the release slice, `@small` / `@medium` / `@large` for the size band. Ingest them verbatim, wherever the Gherkin lives — the repo adapter parses tag lines above each scenario, and a tracker adapter parsing Gherkin out of a description or Acceptance Criteria field must preserve those lines onto `tags` rather than dropping them. Tags are decisions someone made; an adapter that loses them silently un-decides a release plan. Never derive or invent tags during ingestion — an untagged scenario is untagged.
 
 ## Minimum viable feature
 

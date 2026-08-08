@@ -23,6 +23,7 @@ Record which rubric produced the badges in the map's lede. A 7.5 does not mean t
 - [Collect](#collect)
 - [Verify](#verify)
 - [Handling a feature whose spec lives elsewhere](#handling-a-feature-whose-spec-lives-elsewhere)
+- [Sizing the corpus (optional)](#sizing-the-corpus-optional)
 
 ## Split first
 
@@ -128,3 +129,41 @@ If a feature's spec is not in the ingested record — it lives in a repo, a link
 When you genuinely cannot, tell the agent so explicitly in its prompt, and instruct it to set `notAssessable: true` and to say in the summary that the score rates reviewability of *this record*, not the quality of the spec. Ask for at least one edit addressing how a spec that lives elsewhere can be made reviewable by Product and QA without duplicating it — CI-generated living documentation and a commit-pinned link are the usual answers.
 
 The renderer surfaces the flag next to the badge. Without it, the map tells the reader that the team with the most disciplined spec practice has the worst spec in the portfolio.
+
+## Sizing the corpus (optional)
+
+When the user wants size badges — how big each feature is, where the Large scenarios hide, what the MVP slice costs — sizing is delegated to `govkit-feature-slice`, which owns the Scenario Complexity Matrix and the MoSCoW slice definitions. Same principle as quality scoring: do not restate its rubric here or in a prompt.
+
+Size and quality are different questions and their verdicts never mix: a feature can be Approved and huge, or Blocked and tiny. Badge them separately.
+
+**Check the tags first.** If the corpus already carries `@small`/`@medium`/`@large` and `@mvp`/`@v1`/`@v2` scenario tags (ingestion preserves them on `scenarios[].tags`), the sizing was already decided — render from the tags and skip the fan-out entirely. Band counts come straight from size tags; only per-slice *points* need a sizing run.
+
+**Otherwise fan out**, same pattern as quality scoring — split files, one feature per agent, all spawned in one turn, raw JSON back:
+
+```
+Apply the GovKit Scenario Complexity Matrix to size ONE feature's scenarios. This is
+batch sizing for a feature map — non-interactive. Do not pause, do not ask questions,
+do not apply tags, do not write anything back. Size and recommend only.
+
+Read these first:
+- <plugin>/skills/govkit-feature-slice/SKILL.md        (Batch mode section and schema)
+- <plugin>/skills/govkit-feature-slice/references/slicing-rubric.md
+
+Then read the feature: split/<KEY>.json
+Field mapping: `rules[].scenarios[]` = the Gherkin; `rules[].scenarios[].tags[]` =
+existing tags — read taggedSlice from them, never invent it.
+
+Judge the three dimensions per scenario as integers 1-3 with grounded notes. Emit NO
+points, bands, or totals — the caller computes those. Return ONLY a raw JSON object
+matching the Batch output schema in govkit-feature-slice's SKILL.md.
+```
+
+Collect the verdicts into `sizing.json` (`{"features": {"<KEY>": <verdict>}}`), then compute and verify in one step:
+
+```bash
+python ../govkit-feature-slice/scripts/compute_size.py sizing.json --features features.json
+```
+
+The script owns all arithmetic — points, bands, rollups, per-slice points, Large-on-MVP risk flags — and exits non-zero on any invalid judgment. The agents emit judgments only; a schema with no total field cannot carry a wrong total. Pass the computed output to the renderer.
+
+**Recommendations are not decisions.** Batch sizing recommends slices; nobody confirmed them. The renderer badges size from computed bands, but groups and filters by *tagged* slices only — a `recommendedSlice` appears on the card as a recommendation, clearly labeled, and the map's lede says whether slices were tagged by the team or recommended by batch sizing. A map that renders unconfirmed recommendations as a release plan has made the team's decision for them.

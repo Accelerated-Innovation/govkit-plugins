@@ -3,10 +3,11 @@
 `scripts/render_map.py` builds one self-contained HTML file — inline CSS and JS, no network calls, no build step. It gets emailed, pasted into a wiki, and opened offline six months later, so it has to keep working with nothing around it.
 
 ```bash
-python scripts/render_map.py -f features.json -s scores.json -c config.json -o feature-map.html
+python scripts/render_map.py -f features.json -s scores.json -z sizing_computed.json \
+                             -c config.json -o feature-map.html
 ```
 
-`-s` and `-c` are optional. Without scores the map still renders — chain, cards, ledger — just without badges.
+`-s`, `-z` and `-c` are optional. Without scores the map still renders — chain, cards, ledger — just without badges. `-z` takes the **computed** sizing file from `govkit-feature-slice`'s `compute_size.py`, never the raw agent verdicts; entries without a `rollup` are skipped with a warning, because only the script's arithmetic is trusted on the page.
 
 ## Contents
 
@@ -62,6 +63,10 @@ Long chains render wide and the container scrolls horizontally. That is delibera
 **GovKit readiness panel** inside each card: summary, critical blockers, ranked edits, and the ten-dimension breakdown with a coloured pip per dimension. Collapsed by default so the card stays scannable, but present so the badge is auditable in place. A badge nobody can interrogate gets ignored the first time somebody disagrees with it.
 
 **The standing caveat** renders above the chain whenever scores are present, stating that the blocker list is the gate rather than the number, and that these are batch scores. Do not remove it. Someone will read this page without the conversation that produced it.
+
+**Size badge** in each sized card's metrics row — the distribution `nL · nM · nS · total pts`, with the Large count in amber when nonzero. A corpus with committed `@small`/`@medium`/`@large` tags but no sizing file still gets the badge with band counts only — the points total renders only from a computed sizing file, because points are arithmetic and arithmetic comes from `compute_size.py` or not at all. A distribution rather than an average, because the Large count is the risk signal an average hides. The **Scenario sizing panel** inside the card carries the per-scenario breakdown (dimensions, points, band, slice) and the Large-on-MVP risk flags; slices marked `rec` are unconfirmed batch recommendations. The size note above the chain carries the same caveat page-side. Do not remove that one either.
+
+**Slice tags** (`@mvp` / `@v1` / `@v2`, `@small` / `@medium` / `@large`) render as chips on scenario names, and a **release-slice filter bar** appears above the lanes whenever any scenario carries a slice tag. The filter dims scenarios outside the chosen slice and works from *tagged* slices only — recommendations never drive it, so the filter cannot present an unconfirmed release plan as a decided one.
 
 ## Verifying the render
 

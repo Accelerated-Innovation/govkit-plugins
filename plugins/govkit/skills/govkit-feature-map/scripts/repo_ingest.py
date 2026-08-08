@@ -55,6 +55,7 @@ def parse_feature_file(text):
     rules, cur_rule, cur_scen = [], None, None
     title = description = ""
     in_desc = False
+    pending_tags = []
 
     def flush_scenario():
         nonlocal cur_scen
@@ -74,15 +75,24 @@ def parse_feature_file(text):
         if not line or line.startswith("#"):
             continue
 
+        if line.startswith("@"):
+            # Tag line; attaches to the next Scenario. Slice (@mvp/@v1/@v2) and
+            # size (@small/@medium/@large) tags are govkit-feature-slice's output.
+            in_desc = False
+            pending_tags.extend(t for t in line.split() if t.startswith("@"))
+            continue
+
         if line.startswith("Feature:"):
             title = line[len("Feature:"):].strip()
             in_desc = True
+            pending_tags = []  # feature-level tags are not scenario tags
             continue
 
         if line.startswith("Rule:"):
             in_desc = False
             flush_rule()
             cur_rule = {"rule": line[len("Rule:"):].strip(), "scenarios": []}
+            pending_tags = []
             continue
 
         if line.startswith(("Scenario Outline:", "Scenario:", "Example:")):
@@ -91,7 +101,8 @@ def parse_feature_file(text):
             if cur_rule is None:
                 cur_rule = {"rule": "", "scenarios": []}
             name = line.split(":", 1)[1].strip()
-            cur_scen = {"name": name, "steps": []}
+            cur_scen = {"name": name, "steps": [], "tags": pending_tags}
+            pending_tags = []
             continue
 
         if line.startswith(("Given ", "When ", "Then ", "And ", "But ")):
@@ -100,7 +111,7 @@ def parse_feature_file(text):
                 cur_scen["steps"].append(line)
             continue
 
-        if line.startswith(("Background:", "Examples:", "Scenarios:", "|", "@", '"""')):
+        if line.startswith(("Background:", "Examples:", "Scenarios:", "|", '"""')):
             in_desc = False
             continue
 
