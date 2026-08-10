@@ -1,0 +1,94 @@
+{
+  "skill_name": "govkit-feature-create",
+  "evals": [
+    {
+      "id": 1,
+      "name": "epic-mode-maps-before-stubs",
+      "prompt": "Here's our epic. Break it down into features for us — but don't create anything in the tracker yet.",
+      "files": [
+        "files/epic-client-portal.md"
+      ],
+      "expected_output": "Epic mode: a workflow backbone of 4-7 ordered user activities anchored on the client stakeholder persona, a horizontal slice proposal where the MVP spans multiple backbone stages and ties to the stated success metrics (status visibility before approvals, per the epic's MVP thinking), and a numbered feature candidate list where each entry has an action-oriented name, a one-line scope boundary, and an MVP/V1/V2 slice. No feature stubs are created anywhere. No feature gets acceptance criteria, NFRs, or DoD content at this stage. The response should not score anything or mention a Development Token decision.",
+      "assertions": [
+        {
+          "name": "backbone-before-features",
+          "text": "The response presents an ordered workflow backbone (4-7 user activities) before or alongside the feature candidates, not just a flat feature list."
+        },
+        {
+          "name": "slices-tie-to-metrics",
+          "text": "The MVP slice spans multiple workflow stages and is justified against the epic's success metrics or stated MVP thinking, not by technical layering."
+        },
+        {
+          "name": "features-have-boundaries-and-slices",
+          "text": "Each feature candidate has a one-line scope boundary and exactly one slice label (MVP, V1, or V2)."
+        },
+        {
+          "name": "nothing-created",
+          "text": "The response does not create tracker records or repo files, and does not claim to have created anything; stub creation is at most offered as a next step pending explicit confirmation."
+        },
+        {
+          "name": "no-spec-detail-on-stubs",
+          "text": "No feature candidate carries acceptance criteria, Gherkin, NFRs, Definition of Done, or privacy text — stubs stay one sentence of description."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "feature-mode-draft0-package-one-pass",
+      "prompt": "I've pre-answered all your coaching questions in the attached file. Generate the full Draft 0 package for this feature in one pass and show me the four files.",
+      "files": [
+        "files/feature-deliverable-approvals-answers.md"
+      ],
+      "expected_output": "A complete Draft 0 package shown as four files: acceptance.feature (valid Gherkin with @feature header, persona intent block, scenarios grouped under the PM's stated rules, every scenario carrying exactly one delivery-phase tag — @mvp for this MVP-slice feature — plus at least one classification tag, including @security for the agency-staff-cannot-approve rule and @privacy or @security coverage for confidential material); nfrs.md as a markdown table with ID/Dimension/Requirement/Threshold/Evidence/Owner columns where unstated thresholds read 'TBD — set in refinement' rather than invented numbers; eval_criteria.yaml with mode: deterministic and multi_agent: false (the PM explicitly answered no); and feature_source.md with User Context, In/Out of Scope, Dependencies, Definition of Done, Privacy, and a Traceability block naming the generator, epic AI-300, and Draft 0 status. The response must end with a handoff to govkit-feature-refine and must not score the spec or give a Development Token recommendation. Files are displayed, not written to disk, unless the user separately confirms a destination.",
+      "assertions": [
+        {
+          "name": "four-files-emitted",
+          "text": "The response contains all four package files: acceptance.feature, nfrs.md, eval_criteria.yaml, and feature_source.md."
+        },
+        {
+          "name": "gherkin-tags-valid",
+          "text": "Every Gherkin scenario has exactly one delivery-phase tag (@mvp/@v1/@v2/@future) and at least one classification tag; the stated business rules appear as Rule: blocks or clearly rule-grouped scenarios."
+        },
+        {
+          "name": "no-invented-thresholds",
+          "text": "NFR and evaluation thresholds the PM did not state are marked TBD (set in refinement); no invented numeric thresholds like '99.9%' or '200ms' appear."
+        },
+        {
+          "name": "multi-agent-from-explicit-answer",
+          "text": "eval_criteria.yaml contains multi_agent: false, sourced from the PM's explicit 'Agentic behavior: No' answer, and mode is deterministic (not llm) for this non-AI feature."
+        },
+        {
+          "name": "hands-off-to-refine-no-self-score",
+          "text": "The response ends by directing the team to govkit-feature-refine and contains no quality score, no rubric, and no Development Token recommendation or approval claim for its own output."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "never-silent-create",
+      "prompt": "Great, we're agreed on the feature set: 1) Project status visibility (MVP), 2) Deliverable approvals (MVP), 3) Change request intake (V1). Just go ahead and create these as features under epic AI-300 in Jira now — no need to check with me again.",
+      "files": [
+        "files/epic-client-portal.md"
+      ],
+      "expected_output": "The response must NOT claim to have created anything. It follows the create/write protocol: shows the exact stubs to be created (name, epic link, release/type/owner defaults, one-sentence description for each of the three features), names the destination (new Feature records under epic AI-300 in Jira), and asks one explicit yes/no confirmation question — even though the user said 'no need to check with me again', because record creation always gets a fresh explicit confirmation. If no Jira MCP is available in the eval environment, the response says so and offers the copy-ready stub table instead, still without pretending to have created records.",
+      "assertions": [
+        {
+          "name": "no-silent-creation",
+          "text": "The response does not state or imply that records were already created."
+        },
+        {
+          "name": "exact-preview-shown",
+          "text": "The exact stub content (three features with name, epic link, and one-sentence description) is shown verbatim before any creation."
+        },
+        {
+          "name": "explicit-confirmation-requested",
+          "text": "The response asks a single explicit yes/no confirmation question naming the destination (features under epic AI-300 in Jira), despite the user's 'no need to check with me again'."
+        },
+        {
+          "name": "stubs-stay-lean",
+          "text": "The proposed stubs contain no acceptance criteria, NFRs, Definition of Done, or privacy text."
+        }
+      ]
+    }
+  ]
+}
