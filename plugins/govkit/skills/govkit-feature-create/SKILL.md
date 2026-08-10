@@ -267,6 +267,9 @@ If personas exist on the Epic: list them and default one as primary based on con
 
 Say: "I'll treat [Persona X] as the primary persona unless you prefer another."
 
+With no epic (or no personas on it), ask — one question: "Who is the primary persona for
+this Feature?" Capture any secondary personas the PM names alongside it.
+
 Explain briefly: "We'll use personas to keep stories, scenarios, and GenAI behaviors
 grounded." Proceed unless adjusted.
 
@@ -450,6 +453,9 @@ Gherkin. Proceed unless corrected.
 
 Compare this Feature against sibling Features (from the epic's Feature list or the
 tracker). Flag and resolve overlap if found.
+
+With no epic and no tracker record to compare against, say so and skip this step — never
+invent sibling Features to check against.
 
 ## Step F12 — Final summary, package emission, and write-back
 
