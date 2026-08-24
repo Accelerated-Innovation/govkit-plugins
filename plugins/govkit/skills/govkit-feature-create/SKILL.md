@@ -374,6 +374,7 @@ Always:
 | Skill | Owns | Relationship |
 |---|---|---|
 | `val-rapid-validation` (aipos-p2) | Whether to build at all | Runs first. The Validation Decision's MVP scope is this skill's epic input; do not create features for an unvalidated epic without saying so |
+| `govkit-epic-create` | The epic itself | Runs immediately before. Its field names are this skill's `epic:` input contract, and its personas and evaluation criteria are what Epic mode inherits — read its `epics/<key>/epic.md` rather than asking the PM to restate it |
 | `govkit-feature-refine` | Spec quality and the 3 Amigos review | Consumes this skill's Draft 0. This skill creates; refine judges. Never self-review here |
 | `govkit-feature-slice` | Per-scenario sizing and re-slicing | Owns the `@mvp`/`@v1`/`@v2` vocabulary. This skill assigns the delivery tag from the feature's confirmed slice; slice re-decides it per scenario with the Complexity Matrix |
 | `govkit-feature-readiness` | The repo-side Development Token gate | Its blocker list is what this skill writes toward — missing thresholds, absent privacy paths, and missing eval criteria are its named blockers |

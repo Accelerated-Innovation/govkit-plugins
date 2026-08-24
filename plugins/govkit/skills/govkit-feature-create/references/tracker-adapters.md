@@ -47,7 +47,7 @@ Rules:
 
 - **Never overwrite silently.** If a file exists, show what is being replaced and confirm. A `feature_source.md` that has been hand-edited since generation is somebody's work.
 - Writing files is not the same as writing to a tracker — it is local, reversible, and visible in `git diff`. One confirmation for the set is enough; the ceremony below is for records other people can see.
-- Epic mode writes a `story-map.md` alongside the feature directories, holding the backbone, slices, and boundaries. It is the record of *why* the features are these features, and it is the first thing someone asks for three months later.
+- Epic mode writes a `story-map.md` holding the backbone, slices, and boundaries. It is the record of *why* the features are these features, and it is the first thing someone asks for three months later. Put it at `epics/<key>/story-map.md` when an epic package exists (the layout `govkit-epic-create` writes), so the epic, the reasoning that split it, and the resulting features stay traceable to each other; otherwise put it beside the feature directories.
 
 ## The create protocol
 

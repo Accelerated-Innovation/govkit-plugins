@@ -179,6 +179,7 @@ Primary output: the **Development Token**.
 
 **Authoring**
 
+- **[govkit-epic-create](./plugins/govkit/skills/govkit-epic-create/SKILL.md)**: A problem-first interview that produces a complete epic — a problem statement with no solution smuggled into it, named personas, quantified impact, OKR alignment, three-to-five measurable success metrics, dated evidence, MVP scope with a real out-of-scope list, risks, and NFRs. In GenAI mode it sets the evaluation criteria every feature under the epic inherits. Where a Pillar 2 viability brief exists, this is the skill that writes out the handoff inputs it named.
 - **[govkit-feature-create](./plugins/govkit/skills/govkit-feature-create/SKILL.md)**: Break an epic into a workflow-aligned, non-overlapping feature set via lightweight story mapping, then author one feature into Draft 0 — user stories, structured description, auto-tagged Gherkin, NFRs, Definition of Done, privacy impact. Writes a repo feature package by default; creates or updates Jira and Aha! records only after an explicit, destination-named confirmation. Switches on evaluation-driven authoring automatically for GenAI features.
 
 **Spec and gate**
