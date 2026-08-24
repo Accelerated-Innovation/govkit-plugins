@@ -47,7 +47,7 @@ Settings → Customize → plugins, then add `Accelerated-Innovation/govkit-plug
 
 ```
 /plugin install aipos-p2@aipos     # Pillar 2 — Rapid Validation
-/plugin install govkit@aipos       # Pillar 3 — Build-to-Earn
+/plugin install govkit@aipos       # Pillar 3 — Accelerated Development
 ```
 
 Install both if you own a product end to end. Install one if you only live in that half of the lifecycle.
