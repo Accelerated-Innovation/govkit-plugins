@@ -1,0 +1,147 @@
+{
+  "skill_name": "govkit-feature-create",
+  "evals": [
+    {
+      "id": 1,
+      "name": "epic-mode-maps-before-splitting",
+      "prompt": "Here's our epic. Can you break it down into the features we'll need?",
+      "files": [
+        "files/epic-claims-triage.md"
+      ],
+      "expected_output": "Epic mode is detected and stated in one line without a routing question. The response builds a workflow backbone of 4-7 user activities named from the adjuster's side (receive/notice a claim, assemble the file, triage the queue, route or assign, make a determination) — not architectural layers. It then proposes horizontal slices (MVP/V1/V2) where each spans multiple backbone stages, delivers a usable outcome, and names which of the epic's three success metrics it moves. Feature candidates follow, each with a short action-oriented name, a one-line scope boundary saying what it owns and does not own, and its slice. The overlap and vertical-only checks are run and reported. Defaults for release, type, and owner are proposed (owner defaulting to Dana Whitfield from the epic). Nothing is created — the response ends by presenting the set for confirmation.",
+      "assertions": [
+        {
+          "name": "backbone-is-a-journey",
+          "text": "The backbone lists 4-7 user activities in the order the adjuster does them, named from the user's side; no activity name is a system component, layer, or service (no 'API', 'database', 'service' as activity names)."
+        },
+        {
+          "name": "slices-span-stages",
+          "text": "Each proposed slice spans multiple backbone stages and delivers a usable outcome; no slice is a single technical layer or a single backbone activity."
+        },
+        {
+          "name": "slices-tie-to-metrics",
+          "text": "Slices reference the epic's stated success metrics (time to first action, SLA breaches on claims over $250k, or automatic document assembly rate) rather than inventing new metrics."
+        },
+        {
+          "name": "every-candidate-has-a-boundary",
+          "text": "Every feature candidate carries a one-line scope boundary describing what it owns, and its slice."
+        },
+        {
+          "name": "integrity-checks-run",
+          "text": "Both the overlap check and the vertical-only check are explicitly performed and their findings (or 'None') reported before creation is proposed."
+        },
+        {
+          "name": "nothing-created-yet",
+          "text": "No records are created and no files are written; the response ends by presenting the feature set for the PM's confirmation."
+        },
+        {
+          "name": "no-invented-evidence",
+          "text": "No personas, success metrics, evidence, or thresholds appear that are not in the epic; the two open questions (state licensing, fax gateway) are carried as gaps rather than answered."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "stub-creation-requires-explicit-confirmation",
+      "prompt": "Great, that feature list looks right. Proceed — and go ahead and put them in Jira under CLM-88.",
+      "files": [
+        "files/epic-claims-triage.md"
+      ],
+      "expected_output": "The skill does NOT treat 'proceed' plus a general instruction as sufficient authorization to create records. It first previews the complete set of stubs to be created as a table with actual field values (name, epic link, release, type, owner, one-sentence description), names the destination precisely (project, parent epic CLM-88, record type, tracker), states that record creation is not reversible by this skill, and asks a single explicit yes/no question covering the whole set. If no Jira MCP is connected, it says so plainly and emits the copy-ready stub table instead. Stubs contain only the six stub fields — no acceptance criteria, no NFRs, no Definition of Done, no privacy text.",
+      "assertions": [
+        {
+          "name": "proceed-does-not-authorize-create",
+          "text": "The response does not create any record on the strength of 'proceed'; it stops for an explicit, destination-named confirmation first."
+        },
+        {
+          "name": "full-set-previewed",
+          "text": "Every stub to be created is previewed with its actual field values, not summarized as a count or a description."
+        },
+        {
+          "name": "destination-named-precisely",
+          "text": "The confirmation question names the tracker, the parent epic (CLM-88), and the record type."
+        },
+        {
+          "name": "irreversibility-stated",
+          "text": "The response states that created records and their keys are permanent and that this skill will not delete them."
+        },
+        {
+          "name": "stubs-stay-empty",
+          "text": "No stub carries acceptance criteria, NFRs, a Definition of Done, or privacy text."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "genai-feature-inherits-and-flags-missing-thresholds",
+      "prompt": "Let's flesh out this feature. I want the full spec — stories, acceptance criteria, NFRs, definition of done, the lot.",
+      "files": [
+        "files/feature-stub-claim-summary.md"
+      ],
+      "expected_output": "Feature mode is detected. GenAI mode switches on automatically (summarization of documents) and is announced once. The four epic-level evaluation criteria are shown and inherited with their exact thresholds (0.95 groundedness, 0 PII detections, p95 < 3s, $0.04 advisory) — never altered or re-derived. The response works through personas (Regional adjuster as primary), intent and two-sprint size check, a primary user story whose 'so that' is a real outcome, the structured description including a populated Out of Scope section (external-partner review workflow, partial-file summaries), and fully-formed Gherkin with a Feature header, persona intent block, exactly one delivery-phase tag per scenario, at least one classification tag per scenario, and at least one @genai and one @evaluation scenario. The @evaluation scenarios assert the inherited thresholds. Crucially, the un-agreed summary usefulness / adjuster acceptance threshold is marked as an open gap rather than given an invented number. NFRs cover the standard five categories plus the GenAI categories, with EU data residency captured. A draft eval_criteria.yaml is produced. The output is labelled Draft 0 and hands off to govkit-feature-refine.",
+      "assertions": [
+        {
+          "name": "genai-mode-auto-detected",
+          "text": "GenAI mode is switched on automatically from the summarization behavior and announced once, without asking the PM whether the feature is GenAI."
+        },
+        {
+          "name": "thresholds-inherited-unchanged",
+          "text": "The epic's evaluation thresholds (0.95, 0 detections, p95 < 3s, $0.04) are carried across exactly as written, not re-derived, rounded, or replaced."
+        },
+        {
+          "name": "missing-threshold-flagged-not-invented",
+          "text": "No number is invented for summary usefulness or adjuster acceptance rate; it appears as an open gap or a TBD threshold."
+        },
+        {
+          "name": "gherkin-is-well-formed-and-tagged",
+          "text": "The Gherkin has a Feature header and persona intent block; every scenario has exactly one delivery-phase tag and at least one classification tag; at least one scenario is tagged @genai and at least one @evaluation."
+        },
+        {
+          "name": "tag-coverage-shown",
+          "text": "A tag coverage summary line accompanies the Gherkin so the automatic tagging is inspectable."
+        },
+        {
+          "name": "out-of-scope-populated",
+          "text": "The Out of Scope section is present and non-empty, capturing at least the external-partner review workflow or partial-file summaries named in the stub."
+        },
+        {
+          "name": "privacy-and-residency-captured",
+          "text": "The EU data residency constraint appears as an NFR, and the PII/privacy dimension is covered in both NFRs and scenario tagging."
+        },
+        {
+          "name": "labelled-draft-zero",
+          "text": "The output is identified as Draft 0 / not yet refined, no Development Token is issued or implied, and govkit-feature-refine is named as the next step."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "no-tracker-markdown-path-is-complete",
+      "prompt": "We don't use Jira or Aha for this — I just want to talk it through with you and get a markdown file at the end. Feature: let adjusters filter their queue by claim value and age.",
+      "files": [],
+      "expected_output": "The skill proceeds without asking about trackers or treating their absence as a limitation. It runs Feature mode conversationally — one primary question at a time, starting with persona and intent rather than dumping a questionnaire — and produces the repo feature package: feature_source.md with the stub header block, primary user story, structured description including Out of Scope, Definition of Done, and privacy impact; acceptance.feature with tagged Gherkin; nfrs.md as the six-column table. Since nothing establishes GenAI behavior, GenAI mode stays off and no eval_criteria.yaml is produced. Gaps are recorded honestly rather than filled in, since the prompt supplies almost no detail. The markdown output is never described as a fallback, degraded, or second-best path.",
+      "assertions": [
+        {
+          "name": "no-tracker-no-friction",
+          "text": "The skill does not ask which tracker to use, and does not describe the markdown output as a fallback, workaround, or degraded path."
+        },
+        {
+          "name": "one-question-at-a-time",
+          "text": "The response asks one primary question rather than presenting a list or questionnaire of questions."
+        },
+        {
+          "name": "package-filenames-correct",
+          "text": "The named output files are feature_source.md, acceptance.feature, and nfrs.md under a features/<key-or-slug>/ directory."
+        },
+        {
+          "name": "genai-mode-off",
+          "text": "GenAI mode is not activated and no eval_criteria.yaml is produced, since nothing in the request involves model-generated behavior."
+        },
+        {
+          "name": "gaps-recorded-not-filled",
+          "text": "Unknown details (thresholds, personas, dependencies) are recorded as open questions or gaps rather than invented to complete the template."
+        }
+      ]
+    }
+  ]
+}

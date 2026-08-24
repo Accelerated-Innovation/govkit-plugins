@@ -9,7 +9,7 @@
     {
       "name": "govkit",
       "source": "./plugins/govkit",
-      "description": "GovKit skills for governed, AI-assisted delivery: refine Draft 0 feature specs (Gherkin + NFRs + evaluation criteria), size and slice scenarios into MVP/V1/V2 releases, validate repo readiness before coding, map a whole epic or spec corpus into a scored feature map, emit delivery metrics, and generate synthetic test data.",
+      "description": "GovKit skills for governed, AI-assisted delivery: break an epic into features with story mapping and author Draft 0 specs, refine Draft 0 feature specs (Gherkin + NFRs + evaluation criteria), size and slice scenarios into MVP/V1/V2 releases, validate repo readiness before coding, map a whole epic or spec corpus into a scored feature map, emit delivery metrics, and generate synthetic test data.",
       "author": {
         "name": "Accelerated Innovation"
       },
@@ -22,6 +22,8 @@
         "bdd",
         "governance",
         "ai-delivery",
+        "story-mapping",
+        "feature-creation",
         "refinement",
         "readiness",
         "feature-map",

@@ -177,6 +177,10 @@ Plugin: [`aipos-p2`](./plugins/aipos-p2/README.md) · `/plugin install aipos-p2@
 
 Primary output: the **Development Token**.
 
+**Authoring**
+
+- **[govkit-feature-create](./plugins/govkit/skills/govkit-feature-create/SKILL.md)**: Break an epic into a workflow-aligned, non-overlapping feature set via lightweight story mapping, then author one feature into Draft 0 — user stories, structured description, auto-tagged Gherkin, NFRs, Definition of Done, privacy impact. Writes a repo feature package by default; creates or updates Jira and Aha! records only after an explicit, destination-named confirmation. Switches on evaluation-driven authoring automatically for GenAI features.
+
 **Spec and gate**
 
 - **[govkit-feature-refine](./plugins/govkit/skills/govkit-feature-refine/SKILL.md)**: The 3 Amigos review of a generated Draft 0. Scores against a 10-dimension quality rubric, finds blockers and evidence gaps, suggests rewritten Gherkin, and produces a Development Token recommendation. Also exposes a non-interactive batch mode for scoring a whole corpus.
