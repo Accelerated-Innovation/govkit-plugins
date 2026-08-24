@@ -92,7 +92,7 @@ It validates every dimension judgment and exits non-zero without writing anythin
 
 Run these before rendering, every time. Batch scoring is done by language models reading a rubric, and the characteristic failure is a reported total that does not match its own dimensions — which silently moves a feature across a decision band. A score of 8.5 reported for dimensions summing to 8.0 is the difference between "Approved" and a conversation.
 
-The script checks: every dimension is 1.0/0.5/0.0, all ten present and in rubric order, the stated score equals the sum, the decision follows from blockers plus bands, and every ingested feature was scored. It exits non-zero on any failure. If it fails, fix the verdicts — re-run the agent for that feature — rather than rendering anyway. `--fix-sums` will recompute totals and decisions mechanically, but prefer re-scoring when the error suggests the agent was confused rather than sloppy.
+The script checks: every dimension is 1.0/0.5/0.0, all present and in rubric order, the stated score equals the sum, the decision follows from blockers plus bands, and every ingested feature was scored. It defaults to refine's 10-dimension scale; pass `--scale readiness` for 12-dimension readiness verdicts. It exits non-zero on any failure. If it fails, fix the verdicts — re-run the agent for that feature — rather than rendering anyway. `--fix-sums` will recompute totals and decisions mechanically, but prefer re-scoring when the error suggests the agent was confused rather than sloppy.
 
 ### 6. Render
 

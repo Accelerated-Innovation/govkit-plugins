@@ -121,9 +121,11 @@ Only pause when ambiguity genuinely exists, or when the next step is a write.
 
 Switch on GenAI mode silently and announce it once.
 
-**Keywords:** AI, GenAI, LLM, GPT, RAG, embeddings, retrieval, model behavior, summarization, classifier, agent, hallucination, groundedness, reasoning, chatbot, OpenAI, Claude, Azure, Bedrock.
+**Keywords:** AI, GenAI, LLM, GPT, RAG, embeddings, vector search, retrieval, classifier, summarization, chatbot, assistant, agent, hallucination, groundedness, reasoning, safety, prompt, model, model behavior, OpenAI, Claude, Azure, Bedrock.
 
-**Implied behavior:** text generation · natural-language interpretation · reasoning or decision-making · document retrieval · personalization · transcript analysis · multi-step automation.
+**Implied behavior:** text generation · natural-language answers or interpretation · summarization or rewriting · retrieval of documents or passages · reasoning or decision-making · personalized responses or recommendations · transcript analysis · multi-step automation.
+
+(This keyword and behavior list is shared verbatim with `govkit-feature-create` — change one, change both. The epic's `GenAI: yes/no` header line is what feature-create inherits, so the decision made here propagates without re-detection.)
 
 > This epic involves GenAI behavior, so I'll include evaluation criteria and the GenAI NFR categories. Say the word if you'd rather not.
 
@@ -237,7 +239,7 @@ Walk the categories if the PM stalls; adoption and compliance are the two most o
 
 ## Step 8 — Non-functional requirements
 
-Walk the standard categories: **Performance · Security · Scalability · Reliability · Compliance**.
+Walk the **same ten areas the delivery gates review**: **Performance · Security · Privacy · Reliability · Observability · Accessibility · Data quality · Compliance · Cost · Supportability**. Most epics constrain a handful; walk all ten so a skipped area is a decision, not an oversight. (Scalability concerns land under Performance or Reliability.)
 
 **GenAI mode** adds: latency and token cost constraints · model and vendor constraints · data handling constraints · observability and drift monitoring.
 
@@ -310,4 +312,4 @@ Always:
 | `val-rapid-validation` (aipos-p2) | Whether to build at all | Runs first. Its viability brief *names* the problem statement, MVP scope, and evaluation criteria this skill writes out. If no Validation Decision exists, say so once — an epic for an unvalidated opportunity is a well-documented guess |
 | `govkit-feature-create` | Story mapping and Draft 0 authoring | Consumes this epic. This skill's field names are that skill's `epic:` input contract; personas and evaluation criteria are inherited wholesale |
 | `govkit-feature-refine` | Spec quality | Two levels down. Epic-level evaluation criteria are what refine checks feature specs against |
-| `govkit-feature-map` | The corpus view | Renders the features derived from this epic; the epic's success metrics are what a release-weakness read is judged against |
+| `govkit-feature-map` | The corpus view | Renders the features derived from this epic (it ingests feature packages, not the epic itself); reading its weak spots against this epic's success metrics is the human's move, and this epic is where those metrics live |

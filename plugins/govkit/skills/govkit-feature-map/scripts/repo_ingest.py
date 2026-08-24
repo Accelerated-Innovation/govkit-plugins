@@ -213,12 +213,26 @@ def parse_evals(text):
 SECTION = re.compile(r"^#{1,4}\s*(.+?)\s*$")
 
 
+def kebab(name):
+    """Normalize an artifact name to kebab-case so `produces` and `consumes` match
+    string-for-string across features. `Context Pack`, `context_pack` and
+    `context-pack` are the same artifact; a chain that silently drops the edge
+    because two features spelled it differently is worse than no chain."""
+    s = re.sub(r"[`*]", "", name.strip())
+    s = re.sub(r"\s*[—–-]\s.*$", "", s)  # drop trailing " — description" clauses
+    s = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "-", s)  # camelCase boundary
+    s = re.sub(r"[^A-Za-z0-9]+", "-", s).strip("-").lower()
+    return s
+
+
 def parse_source(text):
-    """Pull intent, scope, out of scope, open questions and DoD out of a source
-    markdown file by heading name. Headings are matched loosely because teams name
-    them differently and a strict match would silently drop real content."""
+    """Pull intent, scope, out of scope, open questions, DoD, and the artifact
+    flow (produces/consumes) out of a source markdown file by heading name.
+    Headings are matched loosely because teams name them differently and a strict
+    match would silently drop real content."""
     out = {"userContext": "", "scope": [], "outOfScope": [],
-           "openQuestions": [], "dod": [], "privacy": ""}
+           "openQuestions": [], "dod": [], "privacy": "",
+           "produces": [], "consumes": []}
     # Order matters: "out of scope" also contains "scope", so the more specific
     # bucket has to be tested first or every exclusion lands in the scope list.
     buckets = {
@@ -226,6 +240,11 @@ def parse_source(text):
         "scope": ("in scope", "functional scope", "scope"),
         "openQuestions": ("open question", "question", "unresolved", "decision needed"),
         "dod": ("definition of done", "done when", "dod", "acceptance evidence"),
+        # Structured artifact flow (govkit-feature-create writes these sections);
+        # kept to exact section names so prose "dependencies" never becomes a
+        # phantom chain edge.
+        "produces": ("produces",),
+        "consumes": ("consumes",),
     }
     prose = {
         "userContext": ("user context", "intent", "user story", "why", "purpose", "outcome"),
@@ -307,6 +326,7 @@ def ingest_dir(d, mode, epic):
     meta = parse_source(src) if src else {
         "userContext": "", "scope": [], "outOfScope": [],
         "openQuestions": [], "dod": [], "privacy": "",
+        "produces": [], "consumes": [],
     }
     nfr = parse_nfrs(read_first(d, NFR_NAMES))
     evals = parse_evals(read_first(d, EVAL_NAMES))
@@ -320,8 +340,8 @@ def ingest_dir(d, mode, epic):
         "workstream": "",
         "phases": [],
         "clientVisible": False,
-        "consumes": [],
-        "produces": [],
+        "consumes": [kebab(x) for x in meta["consumes"] if kebab(x)],
+        "produces": [kebab(x) for x in meta["produces"] if kebab(x)],
         "userContext": meta["userContext"] or desc,
         "scope": meta["scope"],
         "outOfScope": meta["outOfScope"],
@@ -358,9 +378,11 @@ MERGE_PREFER_REPO = ("rules", "ruleCount", "scenarioCount", "nfr", "nfrTbd", "ev
 def merge(tracker, repo):
     """Overlay repo specs onto tracker records, keyed by feature key.
 
-    The tracker owns status, workstream, phase, ownership and the artifact chain --
-    things a repo does not know. The repo owns the spec itself. Where a tracker record
-    is empty and the repo has content, the repo wins; that is the whole point.
+    The tracker owns status, workstream, phase and ownership -- things a repo does
+    not know. The repo owns the spec itself. The artifact chain (consumes/produces)
+    can come from either: tracker labels take precedence, and a repo package's
+    Produces/Consumes sections fill in where the tracker is silent. Where a tracker
+    record is empty and the repo has content, the repo wins; that is the whole point.
     """
     by_key = {f["key"]: f for f in tracker}
     for r in repo:

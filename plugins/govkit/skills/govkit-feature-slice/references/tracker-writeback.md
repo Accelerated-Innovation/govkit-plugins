@@ -12,17 +12,13 @@ How the tagged spec gets back into the tracker record. Update-in-place only: thi
 
 ## The preview-confirm protocol
 
-Writing to a tracker is outward-facing — teammates see the record change, automations may fire on it. Every write follows this sequence, no exceptions:
+**The canonical update protocol lives in `../../govkit-feature-create/references/tracker-adapters.md` — read and follow it.** In brief: preview the exact final field text verbatim (the tagged Gherkin as it will be written, not a summary), summarize the delta, name the destination precisely ("Write this to the Acceptance Criteria field of AI-124 in Jira?"), one explicit yes per record — never batched — then write, read back, compare, and report either way. If any step fails — wrong field key, MCP error, read-back mismatch — stop, report, and fall back to copy-ready output rather than retrying blind.
 
-1. **Preview the exact content.** Show the final field text verbatim — the tagged Gherkin as it will be written, not a summary of it.
-2. **Summarize the delta.** In one or two lines: "3 scenarios tagged `@mvp`, 5 `@v1`, 2 `@v2`; scenario 'Bulk reschedule' split into two." If the field currently holds content that the write will replace wholesale, say so.
-3. **Name the destination precisely.** Tracker, record key, field name. "Write this to the Acceptance Criteria field of AI-124 in Jira?"
-4. **One explicit yes.** Ask a single closed question and write nothing until it is answered. One record per confirmation — never batch confirmations across records.
-5. **Read back and verify.** After writing, fetch the record and confirm the field matches what was previewed. Report the result either way; a silent partial write is worse than a failed one.
+Slice-specific deltas:
 
-If any step fails — the field key is wrong, the MCP errors, the read-back differs — stop, report, and fall back to copy-ready output rather than retrying blind.
-
-Optionally offer to add a comment to the record noting that sizing/slicing was applied and by what rubric — useful provenance in a team tracker, but the user's call, not a default.
+- **Update-in-place only.** This skill never uses the create protocol — it edits the fields of the record it read from, full stop.
+- The delta summary is the slicing story: "3 scenarios tagged `@mvp`, 5 `@v1`, 2 `@v2`; scenario 'Bulk reschedule' split into two."
+- Optionally offer to add a comment to the record noting that sizing/slicing was applied and by what rubric — useful provenance in a team tracker, but the user's call, not a default.
 
 ## Jira adapter
 

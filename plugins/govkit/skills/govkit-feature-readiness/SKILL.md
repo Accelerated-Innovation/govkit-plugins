@@ -88,6 +88,8 @@ Optional files:
   plan.md
 ```
 
+`architecture_preflight.md` and `plan.md` are produced **later**, by the GovKit platform process, after the token — they are not expected at this gate, and their absence here is normal, not a gap. (Consequence for metrics: `govkit-metrics-emit`'s completeness score weights `plan.md` heavily, so a fresh post-token package scoring well under 100 there is the expected lifecycle stage, not a defect.) When they do exist — a re-validation of an in-flight feature — read them.
+
 Also inspect, when available: repo architecture docs, existing tests, existing step definitions, GovKit config, and the CI pipeline. If an input is missing, record the gap and decide whether it blocks implementation.
 
 ## Required references
@@ -121,9 +123,70 @@ The critical blocker list is the gate. The 12-dimension score is advisory contex
 
 If the score lands between bands, defer to the blocker list and state that explicitly rather than forcing a number.
 
+## The token record — machine-readable exhaust
+
+The Development Token is a governance decision, and decisions that live only in prose cannot feed metrics. After producing the readiness report, **write the decision as a structured record** at:
+
+```text
+.govkit/tokens/<feature-key>.json
+```
+
+```json
+{
+  "feature_id": "AI-124",
+  "decision": "approved",
+  "score": 10.5,
+  "blockers": [],
+  "draft_version": "draft-1",
+  "ts": "2026-08-24T15:04:00Z"
+}
+```
+
+`decision` is `approved` | `approved_with_edits` | `blocked` — write it for **every** decision, including Blocked; a blocked token is exhaust too (it feeds the blocked-token rate). `blockers` carries the critical blocker list verbatim. This record is what `govkit-metrics-emit`'s reserved `refinement.token.issued` event reads — without it, refinement lead time (Draft 0 → Token) and blocked-token rate cannot be computed from the repo's exhaust.
+
+Writing this file is part of issuing the decision, not a separate confirmation — it is repo-local, versioned, and exactly as reversible as any other file in the working tree. If a record for this feature already exists, the new decision supersedes it; keep the old one only if the team's conventions version them.
+
+Batch mode (below) **never** writes a token record — batch verdicts are advisory scores for a corpus view, not decisions.
+
 ## Output format
 
 Produce the readiness report defined in `references/govkit-readiness-rubric.md`. In short, it includes: work item, advisory score, decision, Development Token, critical blockers, required edits, spec package status, scenario/NFR/evaluation readiness tables, repo fit, AI coding agent instructions, "do not assume" list, deferred items, and the next GovKit step.
+
+## Batch mode (non-interactive corpus validation)
+
+Sometimes the caller is not a team at the gate but another skill or script that needs many repo packages scored at once — `govkit-feature-map` badging a repo-first corpus is the usual case. Same rules as `govkit-feature-refine`'s batch mode: it is the same analysis, emitted as data instead of conversation.
+
+**What changes:**
+
+- No conversation, no pauses. Run the readiness process internally, in order — package completeness and blockers *before* scoring.
+- Emit a single raw JSON object and nothing else — no prose, no markdown fence.
+- Score one feature package per invocation; fan out for a corpus.
+- **Never write a token record and never claim to issue a token.** Batch verdicts are advisory badges; the token is an interactive decision at the gate.
+
+**What does not change:** the 12 dimensions, the 1.0 / 0.5 / 0.0 bands, the critical blocker list, the decision rule, and every guardrail. Never invent content; ground every blocker in what is actually in the package.
+
+### Batch output schema
+
+```json
+{
+  "key": "AI-124",
+  "score": 10.5,
+  "decision": "Approved",
+  "notAssessable": false,
+  "summary": "One sentence, max 200 chars, stating what the score reflects.",
+  "dimensions": [
+    {"n": 1, "name": "Feature package completeness", "score": 1.0, "note": "Max 150 chars, grounded in the package."}
+  ],
+  "blockers": ["Specific, max 200 chars. Empty array if none."],
+  "edits": ["High-priority edit, max 200 chars. Give 3-6, ranked."]
+}
+```
+
+`dimensions` carries all twelve, in rubric order: 1 Feature package completeness, 2 Source traceability, 3 Gherkin syntax and structure, 4 Behavior clarity, 5 Observable outcomes, 6 Rule and edge-case coverage, 7 NFR readiness, 8 Evaluation criteria readiness, 9 Repo fit, 10 Test and evidence execution path, 11 AI coding agent safety, 12 Handoff quality.
+
+`score` is the sum of the twelve dimension scores — compute by addition, never by impression. `decision` follows the standard rule: any blocker present → `Blocked`; otherwise ≥ 10 → `Approved`, 8.5 to under 10 → `Approved with edits`, under 8.5 → `Blocked`. Set `notAssessable: true` when the package itself is unreachable from what you were given — score what is in front of you and say in the summary that the score rates reachability, not quality.
+
+Callers verify these verdicts with `govkit-feature-map`'s `verify_scores.py --scale readiness` before rendering anything from them.
 
 ## Failure handling
 

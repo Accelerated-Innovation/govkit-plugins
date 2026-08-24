@@ -6,8 +6,7 @@
 
 - [Choosing a destination](#choosing-a-destination)
 - [The repo package writer](#the-repo-package-writer)
-- [The create protocol](#the-create-protocol)
-- [The update protocol](#the-update-protocol)
+- [The create and update protocols](#the-create-and-update-protocols)
 - [Section-scoped updates](#section-scoped-updates)
 - [Jira adapter](#jira-adapter)
 - [Aha adapter](#aha-adapter)
@@ -45,27 +44,14 @@ Rules:
 - Writing files is local, reversible, and visible in `git diff`. One confirmation for the package is enough; the ceremony below is for records other people can see.
 - Use the tracker key as `<key>` whenever one exists, so the repo and the tracker stay traceable to each other. Create the tracker record first when you can, and use the key it returns.
 
-## The create protocol
+## The create and update protocols
 
-Creating an epic record is outward-facing: teammates see it, automations fire on it, portfolio reports count it.
+**The canonical protocols live in `../../govkit-feature-create/references/tracker-adapters.md` — read and follow them.** In brief: preview the exact final content (never a summary), name the destination precisely, state what cannot be undone, one explicit yes, then create/write, read back, and report honestly — including partial failures. A bare "proceed" never authorizes a write, and if any step fails, stop and fall back to copy-ready output rather than retrying blind.
 
-1. **Preview the complete content.** Every field, with its actual value — not a summary, not a section list.
-2. **Name the destination precisely.** Tracker, project or workspace, record type. *"Create an Epic in the CLAIMS project in Jira?"*
-3. **State what cannot be undone.** Record keys are permanent, and no GovKit skill deletes a record.
-4. **One explicit yes.**
-5. **Create, then report** the key and link. If creation fails partway — record created but fields unset — say exactly that. A partial create reported honestly is recoverable.
+Epic-specific deltas:
 
-A bare "proceed" from the proceed protocol **never** authorizes a create. The proceed protocol makes thinking cheap, not writes.
-
-## The update protocol
-
-1. **Preview the exact content** — the final field text verbatim.
-2. **Summarize the delta**, and if the write replaces existing content wholesale, show what is being replaced.
-3. **Name the destination precisely** — tracker, record key, field name.
-4. **One explicit yes.** One record per confirmation.
-5. **Read back and verify.** Fetch, compare against the preview, report either way.
-
-If any step fails — wrong field key, MCP error, read-back mismatch — stop, report, and fall back to copy-ready output rather than retrying blind.
+- The create preview shows **every field with its actual value** — an epic has many negotiated sections, and a section list is not a preview. *"Create an Epic in the CLAIMS project in Jira?"* is the destination form.
+- One record per confirmation, always — an epic create is never batched with feature creates.
 
 Field mapping:
 

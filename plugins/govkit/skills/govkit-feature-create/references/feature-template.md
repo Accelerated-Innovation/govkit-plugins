@@ -37,6 +37,7 @@ Stubs get the directory and a `feature_source.md` containing only the stub field
 | | |
 |---|---|
 | **Key** | <tracker key, or `—`> |
+| **Source** | <system of record: jira / aha / markdown / none> |
 | **Epic** | <epic name and link, or `—`> |
 | **Release** | <release / slice> |
 | **Type** | <feature type> |
@@ -68,6 +69,14 @@ As a <primary persona>, I need <capability> so that <outcome>.
 ## Dependencies
 
 - <system, team, or feature this depends on, and what happens if it isn't ready>
+
+## Produces
+
+- <artifact-name — kebab-case name of an artifact this feature emits for others>
+
+## Consumes
+
+- <artifact-name — kebab-case name of an artifact this feature needs from another>
 
 ## Key user flows
 
@@ -115,7 +124,10 @@ Secondary stories exist for other personas or other outcomes of the same capabil
 | **Functional scope** | What it does, as capabilities | Scope creeps because nothing said where it ends |
 | **Out of scope** | What it deliberately doesn't do, and where that lives | The single largest source of rework |
 | **Dependencies** | What must exist first, and the consequence if it doesn't | Discovered mid-sprint |
+| **Produces / Consumes** | Named artifacts, kebab-case, from the Epic-mode scope boundaries | The feature map's dependency chain has no edges; sequencing risk stays invisible |
 | **Key user flows** | The paths through the feature, one line each | Scenarios get written without a journey behind them |
+
+**Produces / Consumes are structured, not prose.** One kebab-case artifact name per bullet (`context-pack`, `routing-decision`), matched string-for-string across features by `govkit-feature-map` to draw its producer/consumer chain — `repo_ingest.py` parses these two sections directly. Spelling the same artifact two ways silently drops the edge, so reuse the exact names sibling features declared. The Dependencies section stays free prose for everything that isn't an artifact (teams, external systems, timing).
 
 **Out of scope is not optional.** It is the section PMs skip most and the one that prevents the most rework. If the PM has nothing to put in it, prompt once from the adjacent features on the story map: what would someone reasonably assume this covers that it doesn't?
 
@@ -126,14 +138,16 @@ A markdown table. The column names matter — this is the shape `govkit-feature-
 ```markdown
 # Non-Functional Requirements — <Feature Name>
 
-| ID | Dimension | Requirement | Threshold | Evidence | Gap |
-|---|---|---|---|---|---|
-| N1 | Performance | Claim routing completes within the submission request | p95 < 400 ms | Load test in CI | |
-| N2 | Security | Only adjusters in the assigned region can open a claim | 0 cross-region reads | Authz integration test | |
-| N3 | Compliance | Routing decisions are retained for audit | 7 years | Retention policy doc | Threshold unconfirmed |
+| ID | Dimension | Requirement | Threshold | Evidence | Owner | Gap |
+|---|---|---|---|---|---|---|
+| N1 | Performance | Claim routing completes within the submission request | p95 < 400 ms | Load test in CI | Eng lead | |
+| N2 | Security | Only adjusters in the assigned region can open a claim | 0 cross-region reads | Authz integration test | Security eng | |
+| N3 | Compliance | Routing decisions are retained for audit | 7 years | Retention policy doc | Compliance analyst | Threshold unconfirmed |
 ```
 
-Categories to walk, in order: **Performance · Security · Scalability · Reliability · Compliance**.
+**Owner is required** — the person or role who will produce the Evidence. Both gates score on it (`govkit-feature-refine` Step 7, `govkit-feature-readiness` dimension 7), and an unowned NFR is never measured. Where an NFR blocks release, say so in the Requirement wording.
+
+Categories to walk — the **same ten areas the gates review**: **Performance · Security · Privacy · Reliability · Observability · Accessibility · Data quality · Compliance · Cost · Supportability**. Most features constrain three to five; walk all ten so a skipped area is a decision, not an oversight. Scalability concerns land under Performance or Reliability.
 
 In GenAI mode, also walk: **Latency** (user-perceived, including model time) · **Token cost** (per request or per period) · **Model and vendor constraints** (which models are permitted, data residency, no-train guarantees) · **Observability** (what is logged about model behavior, and for how long) · **Evaluation cadence** (how often the eval set runs, and what a regression blocks).
 
@@ -192,37 +206,54 @@ Where a Data Protection Impact Assessment is required, say so and name it as a d
 GenAI mode only. This is the shape `govkit-feature-map` parses and `govkit-feature-readiness` checks.
 
 ```yaml
+multi_agent: false        # the PM's explicit answer to the agentic-behavior question — never inferred
+
 evaluation_criteria:
   - id: E1
     type: groundedness
     rule_link: "Summaries reflect only the uploaded claim documents"
-    method: "LLM-as-judge over a 200-item labelled eval set"
+    method: "LLM-as-judge over the labelled eval set"
+    data_source: "200-item labelled claim-summary eval set"
     pass_threshold: ">= 0.95"
+    evidence: "Eval report attached to the PR"
+    owner: "QA / evaluation owner"
     gate: blocking
 
   - id: E2
     type: latency
     rule_link: "Summary returns within the adjuster's review flow"
     method: "p95 over the eval set, measured end to end"
+    data_source: "The same eval set, run against the staging endpoint"
     pass_threshold: "< 3s"
+    evidence: "Latency report in CI artifacts"
+    owner: "Eng lead"
     gate: blocking
 
   - id: E3
     type: safety
     rule_link: "No claimant PII appears in a summary shown to an external partner"
     method: "PII detector over eval set outputs"
+    data_source: "Eval set outputs, full run"
     pass_threshold: "0 detections"
+    evidence: "Detector report attached to the PR"
+    owner: "QA / evaluation owner"
     gate: blocking
 ```
 
 | Field | Meaning |
 |---|---|
+| `multi_agent` | `true` / `false`, from the PM's explicit yes/no answer to the agentic-behavior question. Omit the field entirely if unanswered — never guess. `govkit-feature-refine` requires it and will otherwise carry it as an open question |
 | `id` | Stable identifier, referenced from `@evaluation` scenarios |
 | `type` | What is being measured — groundedness, accuracy, latency, cost, safety, toxicity, refusal rate |
 | `rule_link` | The business rule this evaluates, in the feature's own words |
 | `method` | How it is measured, specifically enough that someone else could run it |
+| `data_source` | The dataset, prompt set, or trace set that drives the evaluation |
 | `pass_threshold` | The number, with its comparator |
+| `evidence` | The artifact that lands in the PR or release review |
+| `owner` | Who produces the evidence |
 | `gate` | `blocking` or `advisory` — whether a failure stops the release |
+
+`method`/`data_source`/`evidence`/`owner` are the fields both gates check (`govkit-feature-refine` Step 8; `govkit-feature-readiness` dimension 8 — "thresholds, data, evidence, and owner"). Filling them at authoring costs one question each; leaving them lands as a 0.5 at the gate.
 
 Every criterion needs a `method` and a `pass_threshold`. Criteria without thresholds are a named readiness blocker, and a threshold you invented is worse than a gap you flagged: write `pass_threshold: "TBD"` with the gap listed in `feature_source.md` and let the PM supply the number.
 

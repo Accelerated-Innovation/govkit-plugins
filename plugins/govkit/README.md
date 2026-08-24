@@ -216,6 +216,7 @@ issues it; slice recommends tags, the PM confirms them.
 
 | Version | Change |
 |---|---|
+| 0.7.0 | Shift-left contract alignment: authoring now walks the gates' ten NFR areas with owners, captures eval-criteria data/evidence/owner fields and the explicit `multi_agent` answer, elicits business rules and emits `Rule:`-grouped Gherkin, and writes structured `Produces`/`Consumes` sections that `repo_ingest.py` now parses into the feature map's chain. Readiness gained a batch mode, a `--scale readiness` verifier path, and a machine-readable token record (`.govkit/tokens/<key>.json`) that unlocks Tier 2 metrics. Write protocols consolidated to one canonical reference; GenAI detection lists unified with epic-level inheritance. |
 | 0.6.0 | Added `govkit-epic-create`: problem-first epic authoring, the solution-in-problem test, three-part success metrics, and epic-level GenAI evaluation criteria that features inherit. Closes the handoff from Pillar 2's viability brief. |
 | 0.5.0 | Added `govkit-feature-create`: epic story mapping, feature stubs, and Draft 0 authoring with automatic Gherkin tagging and GenAI evaluation criteria. First skill that can create tracker records, behind a whole-set preview and explicit confirmation. |
 | 0.4.0 | Added `govkit-feature-slice`; size badges, sizing panel, and MVP/V1/V2 slice filter in the feature map; scenario tags preserved through ingestion. |

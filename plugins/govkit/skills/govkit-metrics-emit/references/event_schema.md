@@ -65,14 +65,17 @@ disclose `method: file-overlap-approximation` when reporting. Exact line
 provenance (git blame lineage) is specified for the aggregator's v2 scan.
 
 ## refinement.token.issued (RESERVED — not emitted in v1)
-Reserved for when `govkit-feature-refine` (govkit-plugins marketplace) writes its
-Development Token decision into the feature package as a structured record. The
-token is defined there as a decision record — Approved / Approved with edits /
-Blocked — authorizing AI-assisted coding to start. Once it exists as exhaust,
-this event unlocks Tier 2 metrics (refinement lead time Draft 0→Token,
+Reserved for reading the Development Token decision record that
+`govkit-feature-readiness` (govkit-plugins marketplace) writes at
+`.govkit/tokens/<feature-id>.json` when it issues a decision. (Attribution note:
+`govkit-feature-refine` produces a token *recommendation*; the token itself is
+issued by the readiness gate — the record and this event follow the issuer.)
+The record carries the decision — Approved / Approved with edits / Blocked —
+authorizing AI-assisted coding to start. Now that the record exists as exhaust,
+emitting this event unlocks Tier 2 metrics (refinement lead time Draft 0→Token,
 blocked-token rate) without changing any v1 metric IDs.
-Planned fields: `feature_id`, `decision` (approved|approved_with_edits|blocked),
-`draft_version`, `ts`.
+Fields (mirroring the record): `feature_id`, `decision`
+(approved|approved_with_edits|blocked), `score`, `blockers[]`, `draft_version`, `ts`.
 
 ## Metric-pair mapping (paired-metric law)
 | Pair | Velocity | Quality | Events consumed |

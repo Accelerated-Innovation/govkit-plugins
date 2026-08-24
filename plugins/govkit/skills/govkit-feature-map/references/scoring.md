@@ -13,7 +13,7 @@ GovKit gates twice. Pick by where the corpus sits, not by convenience:
 
 Record which rubric produced the badges in the map's lede. A 7.5 does not mean the same thing on the two scales, and a reader who assumes the wrong one will misjudge the release.
 
-**Current limitation:** `scripts/verify_scores.py` validates the 10-dimension refine scale only — it asserts exactly ten dimensions in refine's rubric order and applies refine's bands. Scoring a repo corpus against the readiness rubric needs a `--scale readiness` variant with the 12 dimensions and the 8.5/10-of-12 bands. Until that exists, verify readiness verdicts by hand rather than trusting a pass from this script, which will reject them on dimension count.
+Both scales have a verified path: `verify_scores.py` defaults to the 10-dimension refine scale, and `--scale readiness` validates 12-dimension readiness verdicts (rubric order, 1.0/0.5/0.0 bands, sums, and the 10 / 8.5 decision bands). For a repo corpus, fan out exactly as below but point agents at `govkit-feature-readiness`'s SKILL.md (Batch mode section and schema) and its `references/govkit-readiness-rubric.md` instead, then verify with `--scale readiness`. Batch readiness verdicts are advisory badges — they never issue tokens and never write the token record.
 
 ## Contents
 

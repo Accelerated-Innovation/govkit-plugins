@@ -129,8 +129,15 @@ Aha! features often carry requirements as child records. If the Gherkin lives th
       acceptance.feature      -> rules[]
       nfrs.md                 -> nfr[]      (markdown table, columns matched by header name)
       eval_criteria.yaml      -> evals[]
-      feature_source.md       -> userContext, scope, outOfScope, openQuestions, dod, privacy
+      feature_source.md       -> userContext, scope, outOfScope, openQuestions, dod, privacy,
+                                 produces[], consumes[]   (from `## Produces` / `## Consumes`
+                                 sections; entries normalized to kebab-case)
 ```
+
+A repo-first corpus therefore carries its own chain: `govkit-feature-create` writes the
+`## Produces` / `## Consumes` sections from the story map's scope boundaries, and this
+adapter reads them. When merging with a tracker (below), tracker labels take precedence
+and repo sections fill in where the tracker is silent.
 
 These are the artifact names `govkit-feature-refine` already declares in its Inputs section, so a repo laid out for refinement needs no changes to be mappable.
 

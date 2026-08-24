@@ -226,7 +226,7 @@ Review checks:
 - Which business rules lack scenarios?
 - Which invalid, duplicate, expired, unauthorized, or boundary cases matter?
 - Which edge cases are intentionally out of scope?
-- Are deferred cases captured in `out_of_scope.md` or source notes?
+- Are deferred cases captured in the package's out-of-scope section (e.g. in `feature_source.md`) or source notes?
 
 ### 7. NFR readiness
 

@@ -1,6 +1,11 @@
 # Destinations — Repo Package and Tracker Records
 
 > **Tool-agnostic.** The repo package is the default and complete path. Trackers are optional adapters.
+>
+> **Canonical.** The create and update protocols in this file are the canonical write
+> protocols for the GovKit skills. `govkit-epic-create`'s tracker adapters and
+> `govkit-feature-slice`'s tracker write-back defer to these and carry only their own
+> deltas — change the protocol here, and it changes everywhere.
 
 ## Contents
 

@@ -62,7 +62,7 @@ Once per metric, then accept the answer:
 
 Offering "an estimate is fine" is what usually unblocks this. PMs withhold numbers because they fear being held to a guess; making the provenance explicit removes the fear and gets you a usable figure.
 
-Mark provenance the same three ways the impact section uses: **measured** (source + date), **estimated** (whose), **unknown** (a gap). Never launder an estimate into a measurement.
+Mark provenance the same three ways the impact section uses — Pillar 2's marks: **`[E]`** measured (source + date), **`[I]`** estimated (whose), **`[A]`** unknown (a gap). Never launder an `[I]` into an `[E]`.
 
 ## Business objective alignment
 
@@ -164,8 +164,11 @@ evaluation_criteria:
   - id: EPIC-E1
     type: groundedness
     rule_link: "Generated text is traceable to source claim documents"
-    method: "LLM-as-judge over a labelled eval set, minimum 200 items"
+    method: "LLM-as-judge over a labelled eval set"
+    data_source: "Labelled eval set, minimum 200 items"
     pass_threshold: ">= 0.95"
+    evidence: "Eval report attached to the PR"
+    owner: "QA / evaluation owner"
     gate: blocking
     applies_to: all_features
 
@@ -173,7 +176,10 @@ evaluation_criteria:
     type: privacy
     rule_link: "No claimant PII in text shown outside the claims team"
     method: "PII detector over eval set outputs"
+    data_source: "Eval set outputs, full run"
     pass_threshold: "0 detections"
+    evidence: "Detector report attached to the PR"
+    owner: "QA / evaluation owner"
     gate: blocking
     applies_to: all_features
 
@@ -181,10 +187,15 @@ evaluation_criteria:
     type: cost
     rule_link: "Assisted actions stay within the FY26 budget envelope"
     method: "Token accounting over the eval set"
+    data_source: "The eval set, priced at current rates"
     pass_threshold: "<= $0.04 per assisted action"
+    evidence: "Cost report in CI artifacts"
+    owner: "Eng lead"
     gate: advisory
     applies_to: all_features
 ```
+
+The `data_source` / `evidence` / `owner` fields match the feature-level schema and are what the delivery gates check ("thresholds, data, evidence, and owner") — filling them here means every inheriting feature gets them for free. Owners named at the epic level are default owners; a feature can override.
 
 `applies_to` is the one field the feature-level schema doesn't carry — `all_features`, or a named subset. It exists because epic criteria are inherited: without it, every feature inherits every criterion, and a PM ends up gating a settings page on retrieval accuracy.
 

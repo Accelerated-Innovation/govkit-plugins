@@ -145,17 +145,27 @@ Then proceed. Do not force a confirmation gate on the routing decision.
 
 ## GenAI detection
 
+**Inherit first.** If an epic package exists and its header says `GenAI: yes` (written by `govkit-epic-create`), GenAI mode is on — the epic already decided; do not re-detect or re-announce beyond one line. Detection below is for features with no epic, or epics that predate the flag.
+
 Switch on GenAI mode when you see model-generated behavior, in either mode.
 
-**Keywords:** AI, GenAI, LLM, GPT, RAG, embeddings, vector search, retrieval, classifier, summarization, chatbot, assistant, agents, hallucination, groundedness, safety, prompt, model.
+**Keywords:** AI, GenAI, LLM, GPT, RAG, embeddings, vector search, retrieval, classifier, summarization, chatbot, assistant, agent, hallucination, groundedness, reasoning, safety, prompt, model, model behavior, OpenAI, Claude, Azure, Bedrock.
 
-**Descriptions:** natural-language answers · summarization or rewriting · retrieval of documents or passages · free-text interpretation · personalized responses or recommendations · multi-step automation.
+**Descriptions:** text generation · natural-language answers or interpretation · summarization or rewriting · retrieval of documents or passages · reasoning or decision-making · personalized responses or recommendations · transcript analysis · multi-step automation.
+
+(This keyword and behavior list is shared verbatim with `govkit-epic-create` — change one, change both.)
 
 When detected, say once:
 
 > This involves GenAI behavior, so I'll include evaluation scenarios and evaluation NFRs. Tell me if you'd rather not.
 
 Proceed in GenAI mode unless the PM explicitly disables it. GenAI mode changes three things: Gherkin gains `@genai` and `@evaluation` scenarios (`references/gherkin-tagging.md`), NFRs gain the evaluation categories (`references/feature-template.md`), and the package gains a draft `eval_criteria.yaml`.
+
+**The agentic-behavior question.** Once GenAI mode is on, ask the PM explicitly, once — the same question `govkit-feature-refine` asks at its checkpoint:
+
+> One explicit check: agentic behavior — yes or no? Meaning: will this feature use AI agents that act autonomously (planning, multi-step tool use, orchestration of multiple agents, or agent-to-agent handoffs), as opposed to no AI at all or a single-shot AI call?
+
+Record the answer as `multi_agent: true|false` in `eval_criteria.yaml`. **Never infer it from the spec, even when the answer looks obvious** — the team's explicit answer is the record. If the PM defers, leave `multi_agent` unset and list the question as an open gap. Asking here means refine confirms the flag instead of discovering it missing, and batch scoring downstream can read it from the record.
 
 **Inheritance.** If the parent epic carries evaluation criteria, show them briefly and say:
 
@@ -189,7 +199,7 @@ Refine only if asked.
 
 > Now the smallest end-to-end slice that delivers measurable value.
 
-Propose an MVP slice, and optionally V1 and V2. Every slice must span multiple backbone stages, deliver a usable outcome, and tie to a stated success metric. A slice that touches one stage is a layer, not a slice — rework it.
+Propose an MVP slice, and optionally V1 and V2. **When an epic package exists, start from its confirmed Initial Scope / MVP** — propose slices as a refinement of that scope, not a rederivation, and flag any divergence from it explicitly. Every slice must span multiple backbone stages, deliver a usable outcome, and tie to a stated success metric. A slice that touches one stage is a layer, not a slice — rework it.
 
 ### Step E4 — Propose feature candidates
 
@@ -215,6 +225,8 @@ State recommended defaults for release, feature type, and owner:
 Allow per-feature overrides.
 
 ### Step E7 — Create the stubs
+
+**Recommend creating the MVP slice's stubs now and deferring V1/V2.** Stubs for features two slices out are inventory: they age, they get renamed, and their presence invites premature work. Offer the deferral as the default; the PM can override and create the full set — their call, one line, no argument.
 
 Confirm the **whole set in one preview**, then create one stub per confirmed entry with: name, epic link, release, type, owner, and a one-sentence description.
 
@@ -264,15 +276,27 @@ Ask whether other personas or outcomes need stories. Draft each. Zero is a valid
 
 ### Step F5 — Structured description
 
-Draft section by section per `references/feature-template.md`: Summary · Functional Scope · Out of Scope · Dependencies · Key User Flows.
+Draft section by section per `references/feature-template.md`: Summary · Functional Scope · Out of Scope · Dependencies · Produces / Consumes · Key User Flows.
 
 **Out of Scope is not optional.** It is the section that prevents the most rework, and the one PMs skip most often.
 
-### Step F6 — Acceptance criteria
+**Produces / Consumes** are the named artifacts this feature emits and depends on, in kebab-case — they come almost verbatim from the Epic-mode scope boundaries ("A owns it, B consumes it") and they are what `govkit-feature-map` builds its dependency chain from. A feature with no entries in either is rare; ask once.
+
+### Step F6 — Business rules
+
+Before any Gherkin, enumerate the business rules this feature enforces:
+
+> What are the rules here — the policies that decide what happens? Things like "invoices of $10,000 or more require manager approval."
+
+Rules are the one thing the PM knows and a coding agent must never invent, and the entire downstream organizes around them: refine's rule-coverage dimension, Example Mapping's Rules cards, `eval_criteria.yaml`'s `rule_link`, the readiness gate, and the feature map's cards all group by rule. A feature usually has two to five; one is common; zero means the feature is pure mechanics and worth a second look.
+
+For each rule, capture one line in the PM's own words. Where a scenario will exist that no stated rule explains, that is a missing rule — surface it now, not at refinement.
+
+### Step F7 — Acceptance criteria
 
 > We'll write the acceptance criteria as executable behavior specs — fully-formed Gherkin with structured tags, so CI and evaluation can filter on them.
 
-Generate complete, syntactically valid Gherkin per `references/gherkin-tagging.md`: `Feature:` header, persona intent block, `Background:` only where setup is genuinely shared, atomic scenarios, no implementation detail.
+Generate complete, syntactically valid Gherkin per `references/gherkin-tagging.md`: `Feature:` header, persona intent block, **one `Rule:` block per business rule from Step F6** with its scenarios grouped beneath, `Background:` only where setup is genuinely shared, atomic scenarios, no implementation detail.
 
 **Assign tags automatically.** Derive the delivery-phase tag from the feature's slice and the classification tags from each scenario's behavior. Do not make the PM pick tags. Ask only when the feature's slice is unclear, a scenario spans delivery phases, or the intent genuinely cannot be classified.
 
@@ -280,31 +304,33 @@ Run the validation checks in `references/gherkin-tagging.md` and fix what fails 
 
 > I'll use this as the acceptance criteria unless you'd like refinements.
 
-### Step F7 — Non-functional requirements
+### Step F8 — Non-functional requirements
 
-Capture measurable constraints by category — Performance, Security, Scalability, Reliability, Compliance — into the `nfrs.md` table from `references/feature-template.md`.
+Walk the **same ten areas the gates review** — Performance · Security · Privacy · Reliability · Observability · Accessibility · Data quality · Compliance · Cost · Supportability — into the `nfrs.md` table from `references/feature-template.md`. Most features need constraints in three to five of them; walk all ten and record "not applicable" silently for the rest rather than skipping the walk. (Scalability concerns land under Performance or Reliability.) These are `govkit-feature-refine` Step 7's and `govkit-feature-readiness` dimension 7's exact categories — a gap you leave here is a finding there.
 
 In GenAI mode also capture: latency constraints, token cost expectations, model and vendor constraints, observability requirements, and evaluation cadence.
 
+Every NFR row carries an **owner** — the person or role who will produce its evidence. The gates score on it, and an unowned NFR is never measured.
+
 An NFR without a threshold is a wish. If the PM doesn't have the number, write the requirement with the threshold marked as an open gap rather than inventing one — `govkit-feature-readiness` blocks on unmeasurable NFRs, and a gap it can see beats a number it can't trust.
 
-### Step F8 — Definition of Done
+### Step F9 — Definition of Done
 
 Generate the checklist from `references/feature-template.md`, including the conditional items: security checks (if applicable), performance checks (if applicable), GenAI evaluation thresholds met (GenAI mode), documentation updated.
 
-### Step F9 — Privacy impact
+### Step F10 — Privacy impact
 
 Ask: *does this feature process personal or sensitive data?*
 
 If yes, draft the mitigation text and add `@privacy` coverage to the Gherkin. If a privacy scenario is missing, add it — this is one of `govkit-feature-readiness`'s named blockers.
 
-### Step F10 — Overlap check
+### Step F11 — Overlap check
 
 Compare against sibling features under the same epic, when you can see them. Flag and resolve overlap the same way Epic mode does.
 
-### Step F11 — Summary and write
+### Step F12 — Summary and write
 
-Summarize: feature name · primary story · secondary stories · description · Gherkin · NFRs · DoD · privacy · GenAI evaluation notes · size assessment.
+Summarize: feature name · primary story · secondary stories · description · business rules · Gherkin · NFRs · DoD · privacy · GenAI evaluation notes (including the `multi_agent` answer) · size assessment.
 
 Then ask what to write, and where:
 
@@ -351,6 +377,8 @@ Do not:
 - Create or modify any record without the explicit, destination-named confirmation — a bare "proceed" never covers a write
 - Create multiple features without confirming the whole set in one preview first
 - Invent personas, success metrics, evidence, quotes, thresholds, or evaluation numbers
+- Invent business rules, or write a scenario no stated rule explains without surfacing the missing rule
+- Set `multi_agent` without the PM's explicit yes/no answer
 - Put acceptance criteria, NFRs, or DoD on a stub
 - Present Draft 0 as reviewed, approved, or token-ready
 - Ask the PM to choose Gherkin tags that can be derived

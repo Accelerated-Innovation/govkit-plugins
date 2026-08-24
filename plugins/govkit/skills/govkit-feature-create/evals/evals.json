@@ -78,7 +78,7 @@
       "files": [
         "files/feature-stub-claim-summary.md"
       ],
-      "expected_output": "Feature mode is detected. GenAI mode switches on automatically (summarization of documents) and is announced once. The four epic-level evaluation criteria are shown and inherited with their exact thresholds (0.95 groundedness, 0 PII detections, p95 < 3s, $0.04 advisory) — never altered or re-derived. The response works through personas (Regional adjuster as primary), intent and two-sprint size check, a primary user story whose 'so that' is a real outcome, the structured description including a populated Out of Scope section (external-partner review workflow, partial-file summaries), and fully-formed Gherkin with a Feature header, persona intent block, exactly one delivery-phase tag per scenario, at least one classification tag per scenario, and at least one @genai and one @evaluation scenario. The @evaluation scenarios assert the inherited thresholds. Crucially, the un-agreed summary usefulness / adjuster acceptance threshold is marked as an open gap rather than given an invented number. NFRs cover the standard five categories plus the GenAI categories, with EU data residency captured. A draft eval_criteria.yaml is produced. The output is labelled Draft 0 and hands off to govkit-feature-refine.",
+      "expected_output": "Feature mode is detected. GenAI mode switches on automatically (summarization of documents) and is announced once, and the explicit agentic-behavior question (yes or no) is asked rather than inferred. The four epic-level evaluation criteria are shown and inherited with their exact thresholds (0.95 groundedness, 0 PII detections, p95 < 3s, $0.04 advisory) — never altered or re-derived. The response works through personas (Regional adjuster as primary), intent and two-sprint size check, a primary user story whose 'so that' is a real outcome, the structured description including a populated Out of Scope section (external-partner review workflow, partial-file summaries), an enumeration of the business rules in the PM's words, and fully-formed Gherkin with a Feature header, persona intent block, Rule: blocks grouping scenarios under the rules they prove, exactly one delivery-phase tag per scenario, at least one classification tag per scenario, and at least one @genai and one @evaluation scenario. The @evaluation scenarios assert the inherited thresholds. Crucially, the un-agreed summary usefulness / adjuster acceptance threshold is marked as an open gap rather than given an invented number. NFRs walk the ten gate-reviewed areas (Performance, Security, Privacy, Reliability, Observability, Accessibility, Data quality, Compliance, Cost, Supportability) plus the GenAI categories, each captured row carrying an owner, with EU data residency captured. A draft eval_criteria.yaml is produced. The output is labelled Draft 0 and hands off to govkit-feature-refine.",
       "assertions": [
         {
           "name": "genai-mode-auto-detected",
@@ -94,7 +94,15 @@
         },
         {
           "name": "gherkin-is-well-formed-and-tagged",
-          "text": "The Gherkin has a Feature header and persona intent block; every scenario has exactly one delivery-phase tag and at least one classification tag; at least one scenario is tagged @genai and at least one @evaluation."
+          "text": "The Gherkin has a Feature header, a persona intent block, and Rule: blocks grouping scenarios under the business rules they prove; every scenario has exactly one delivery-phase tag and at least one classification tag; at least one scenario is tagged @genai and at least one @evaluation."
+        },
+        {
+          "name": "agentic-question-asked-not-inferred",
+          "text": "The explicit agentic-behavior question (yes or no) is asked of the PM; multi_agent is not inferred from the spec or silently filled in."
+        },
+        {
+          "name": "nfrs-walk-the-gate-areas-with-owners",
+          "text": "The NFR pass walks the ten gate-reviewed areas rather than a shorter list, and every captured NFR row names an owner."
         },
         {
           "name": "tag-coverage-shown",
@@ -119,7 +127,7 @@
       "name": "no-tracker-markdown-path-is-complete",
       "prompt": "We don't use Jira or Aha for this — I just want to talk it through with you and get a markdown file at the end. Feature: let adjusters filter their queue by claim value and age.",
       "files": [],
-      "expected_output": "The skill proceeds without asking about trackers or treating their absence as a limitation. It runs Feature mode conversationally — one primary question at a time, starting with persona and intent rather than dumping a questionnaire — and produces the repo feature package: feature_source.md with the stub header block, primary user story, structured description including Out of Scope, Definition of Done, and privacy impact; acceptance.feature with tagged Gherkin; nfrs.md as the six-column table. Since nothing establishes GenAI behavior, GenAI mode stays off and no eval_criteria.yaml is produced. Gaps are recorded honestly rather than filled in, since the prompt supplies almost no detail. The markdown output is never described as a fallback, degraded, or second-best path.",
+      "expected_output": "The skill proceeds without asking about trackers or treating their absence as a limitation. It runs Feature mode conversationally — one primary question at a time, starting with persona and intent rather than dumping a questionnaire — and produces the repo feature package: feature_source.md with the stub header block, primary user story, structured description including Out of Scope, Definition of Done, and privacy impact; acceptance.feature with tagged, Rule-grouped Gherkin; nfrs.md as the owner-carrying table. Since nothing establishes GenAI behavior, GenAI mode stays off and no eval_criteria.yaml is produced. Gaps are recorded honestly rather than filled in, since the prompt supplies almost no detail. The markdown output is never described as a fallback, degraded, or second-best path.",
       "assertions": [
         {
           "name": "no-tracker-no-friction",

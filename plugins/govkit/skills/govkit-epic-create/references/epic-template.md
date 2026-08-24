@@ -59,7 +59,7 @@ The problem of <X> affects <Y>, resulting in <Z>, and solving it will lead to <b
 
 | Impact | Measure | Provenance |
 |---|---|---|
-| <what it costs> | <number> | measured (source, date) / estimated (whose) / unknown |
+| <what it costs> | <number> | `[E]` measured (source, date) / `[I]` estimated (whose) / `[A]` assumption |
 
 ## Alignment to business objectives
 
@@ -182,7 +182,7 @@ Epic-level NFRs are the standards every feature must meet or explicitly except i
 | Reliability | Available during regional business hours | 99.5%, nightly maintenance permitted |
 ```
 
-Categories: **Performance · Security · Scalability · Reliability · Compliance**.
+Categories — the same ten areas the delivery gates review: **Performance · Security · Privacy · Reliability · Observability · Accessibility · Data quality · Compliance · Cost · Supportability**. (Scalability lands under Performance or Reliability.)
 
 GenAI mode adds: **latency and token cost constraints · model and vendor constraints** (permitted models, data residency, no-train guarantees) **· data handling · observability and drift monitoring**.
 

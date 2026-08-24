@@ -86,6 +86,8 @@ Format: `<Feature name> — owns <responsibility>, up to <boundary>. Does not ow
 
 Vague boundaries ("owns claims handling") are how two teams build the same thing twice. Push for the second half of the sentence.
 
+**Boundaries become the dependency chain.** When a boundary says "A owns the routing decision, B consumes it", that is a producer/consumer edge: A *produces* `routing-decision`, B *consumes* it. Carry these into each feature's `## Produces` / `## Consumes` sections (kebab-case artifact names, per `feature-template.md`) — `govkit-feature-map` draws its chain from exactly these, and a boundary left as prose is an edge the map can't see.
+
 ## Integrity check 1 — overlap
 
 Two features overlap when both could reasonably claim the same responsibility. Read the scope boundaries against each other, pairwise.
@@ -134,6 +136,8 @@ A stub carries exactly:
 And nothing else. No acceptance criteria, no NFRs, no Definition of Done, no privacy text.
 
 This is deliberate. A stub padded with unreviewed generated detail looks finished, so nobody refines it, and the unreviewed Gherkin ends up in a sprint. An empty stub is honestly empty and invites the Feature-mode conversation that produces something real.
+
+**Create the MVP slice's stubs first; defer V1/V2 as the default.** Stubs for features two slices out are inventory — they age, get renamed, and invite premature work. The story map already records what the later slices contain, so nothing is lost by waiting. The PM can override and create the full set; recommend the deferral once and take their answer.
 
 The one-sentence description should be the scope boundary, trimmed. It has already done its job once.
 

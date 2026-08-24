@@ -27,16 +27,25 @@ Feature: <Feature Name>
   Background:
     Given <shared setup, only when genuinely shared>
 
-  @mvp @functional
-  Scenario: <Clear scenario title>
-    Given <precondition>
-    When <the single action under test>
-    Then <observable outcome>
+  Rule: <One business rule, in the PM's own words>
+
+    @mvp @functional
+    Scenario: <Clear scenario title>
+      Given <precondition>
+      When <the single action under test>
+      Then <observable outcome>
+
+  Rule: <The next business rule>
+
+    @v1 @edge-case
+    Scenario: <Clear scenario title>
+      Given ...
 ```
 
 Rules:
 
 - Always include the `Feature:` header and the persona intent block. The intent block is what makes the file readable six months later by someone who never attended the refinement.
+- **One `Rule:` block per business rule**, scenarios grouped beneath the rule they prove. The whole downstream organizes on rules: `govkit-feature-refine`'s rule-coverage dimension, Example Mapping's Rules cards, `eval_criteria.yaml`'s `rule_link`, the readiness gate's structure check, and the feature map's cards (which render "(no Rule declared)" for ungrouped scenarios). A scenario that proves no stated rule is a missing rule to surface, not an orphan to leave.
 - Use `Background:` **only** when setup is genuinely shared by every scenario in the file. A `Background` that applies to three of five scenarios is a bug: it silently changes the meaning of the other two.
 - Keep scenarios atomic — one behavior, one `When`.
 - No implementation detail. "When the user submits the form", not "When a POST is sent to `/api/claims`". The Gherkin outlives the endpoint.
@@ -135,7 +144,8 @@ Run these before presenting Gherkin. Fix what fails — a missing tag is a defec
 7. Delivery tags are consistent with the feature's confirmed slice — an `@mvp` scenario in a V2 feature is either a mis-tag or a scoping error, and both are worth a line.
 8. Every `@evaluation` scenario asserts a threshold, or marks the threshold as an open gap.
 9. Every scenario has an observable outcome.
-10. The file parses: `Feature:` header present, persona block present, no orphaned steps.
+10. Every scenario sits under the `Rule:` block it proves; a scenario no stated rule explains is a missing-rule gap to surface, not a formatting fix.
+11. The file parses: `Feature:` header present, persona block present, `Rule:` blocks present, no orphaned steps.
 
 Correcting a tag needs no announcement. **Hiding the result does** — always present the full Gherkin plus a one-line coverage summary so the tagging is inspectable even though it was automatic:
 

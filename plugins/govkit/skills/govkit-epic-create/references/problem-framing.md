@@ -97,13 +97,13 @@ Walk those five categories when the PM stalls. For each, push once toward a numb
 | "It's a compliance risk" | What's the exposure if it's found — fine, finding, remediation? |
 | "Users hate it" | How does that show up — churn, support volume, a survey score? |
 
-Then mark provenance honestly. Three states:
+Then mark provenance honestly, using the same marks Pillar 2's artifacts use — so a viability brief's provenance survives into the epic without translation:
 
-- **Measured** — from a system, a study, or a report. Name the source and its date.
-- **Estimated** — the PM's informed judgment. Say whose estimate and record it as an estimate.
-- **Unknown** — nobody knows. Record it as a gap.
+- **`[E]` evidence-backed / measured** — from a system, a study, or a report. Name the source and its date.
+- **`[I]` inferred / estimated** — the PM's informed judgment or a derivation from measured inputs. Say whose, and from what.
+- **`[A]` assumption / unknown** — nobody knows. Record it as a gap and an assumption to test.
 
-**Never convert an estimate into a measurement by writing it without qualification.** An unqualified "22 minutes per claim" in an epic becomes a fact in a business case within a month, and nobody can trace where it came from.
+**Never convert an `[I]` or `[A]` into an `[E]` by writing it without qualification.** An unqualified "22 minutes per claim" in an epic becomes a fact in a business case within a month, and nobody can trace where it came from.
 
 If a claimed impact has no evidence in Step 5, it stays an assumption. Do not soften it into fact for symmetry.
 
